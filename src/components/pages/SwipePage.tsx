@@ -2,27 +2,13 @@
 
 import { useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { generateClient } from "aws-amplify/data";
-import type { Schema } from "@/types/schema";
+import { client } from "@/lib/api-client";
+import { QUERY_KEYS } from "@/constants/query-keys";
+import type { ViewableProfile } from "@/types";
 import SwipeDeck from "../SwipeDeck";
 import SwipeTutorial from "../SwipeTutorial";
 import { useUiStore } from "@/stores/ui-store";
 import { toast } from "sonner";
-
-const client = generateClient<Schema>();
-
-export type ViewableProfile = {
-  userId: string;
-  displayName: string | null;
-  photo1Url: string | null;
-  photo2Url: string | null;
-  photo3Url: string | null;
-  photo4Url: string | null;
-  preferences: string[];
-  preferenceFreeText: string | null;
-  department: string | null;
-  isMatched: boolean;
-};
 
 export default function SwipePage({ userId }: { userId: string }) {
   const [nextToken, setNextToken] = useState<string | null>(null);
@@ -31,7 +17,7 @@ export default function SwipePage({ userId }: { userId: string }) {
   const { setMatchModal } = useUiStore();
 
   const { data: candidates, isLoading } = useQuery({
-    queryKey: ["candidates", nextToken],
+    queryKey: QUERY_KEYS.candidates(nextToken),
     queryFn: async () => {
       const result: any = await client.queries.getSwipeCandidates({
         limit: 10,
@@ -53,7 +39,6 @@ export default function SwipePage({ userId }: { userId: string }) {
           targetId,
           direction,
         });
-
         if (result?.data?.isMatch) {
           setMatchModal(true, targetId);
           toast.success("マッチしました！🎉");

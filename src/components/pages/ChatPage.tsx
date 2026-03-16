@@ -2,25 +2,18 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { generateClient } from "aws-amplify/data";
-import type { Schema } from "@/types/schema";
-import { Button } from "@/components/ui/button";
+import { client } from "@/lib/api-client";
+import { QUERY_KEYS } from "@/constants/query-keys";
+import { getChatId } from "@/utils/chat";
+import { formatTime, formatDateFull } from "@/utils/date";
+import type { ChatMessage } from "@/types";
 
-const client = generateClient<Schema>();
-
-function getChatId(userId1: string, userId2: string): string {
-  return [userId1, userId2].sort().join("_");
-}
-
-type Message = {
-  id: string;
-  chatId: string;
-  senderId: string;
-  content: string;
-  messageType: string;
-  sentAt: string;
-  createdAt: string;
-};
+const SUGGESTIONS = [
+  "明日のランチどうですか？",
+  "12時に1階ロビーで待ち合わせは？",
+  "和食はいかがですか？",
+  "何か食べたいものありますか？",
+];
 
 export default function ChatPage({
   userId,
@@ -40,16 +33,15 @@ export default function ChatPage({
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-
   const { data: messages } = useQuery({
-    queryKey: ["chat", chatId],
+    queryKey: QUERY_KEYS.chat(chatId),
     queryFn: async () => {
       const result: any = await client.models.ChatMessage
         .listChatMessageByChatIdAndSentAt(
           { chatId },
           { sortDirection: "ASC", limit: 100 }
         );
-      return (result?.data ?? []) as Message[];
+      return (result?.data ?? []) as ChatMessage[];
     },
     refetchInterval: 1000,
   });
@@ -64,16 +56,14 @@ export default function ChatPage({
       const model = client.models.ChatMessage as any;
       if (model?.onCreate) {
         sub = model.onCreate().subscribe({
-          next: (msg: Message) => {
+          next: (msg: ChatMessage) => {
             if (msg.chatId === chatId) {
-              queryClient.invalidateQueries({ queryKey: ["chat", chatId] });
+              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.chat(chatId) });
             }
           },
         });
       }
-    } catch {
-      // polling handles it
-    }
+    } catch { /* polling handles it */ }
     return () => sub?.unsubscribe?.();
   }, [chatId, queryClient]);
 
@@ -89,7 +79,7 @@ export default function ChatPage({
         sentAt: new Date().toISOString(),
       });
       setNewMessage("");
-      queryClient.invalidateQueries({ queryKey: ["chat", chatId] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.chat(chatId) });
       inputRef.current?.focus();
     } catch (err) {
       console.error("Send failed:", err);
@@ -101,14 +91,6 @@ export default function ChatPage({
   const handleSend = useCallback(() => {
     sendMessage(newMessage);
   }, [newMessage, sendMessage]);
-
-
-  const suggestions = [
-    "明日のランチどうですか？",
-    "12時に1階ロビーで待ち合わせは？",
-    "和食はいかがですか？",
-    "何か食べたいものありますか？",
-  ];
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-gradient-to-b from-orange-50 to-background">
@@ -125,9 +107,7 @@ export default function ChatPage({
         <div className="flex items-center gap-3 flex-1">
           <div>
             <p className="font-semibold text-sm leading-tight">{matchedUserName}</p>
-            <p className="text-[11px] text-orange-500">
-              ランチの予定を決めましょう 🍽️
-            </p>
+            <p className="text-[11px] text-orange-500">ランチの予定を決めましょう 🍽️</p>
           </div>
         </div>
       </div>
@@ -141,12 +121,10 @@ export default function ChatPage({
             </div>
             <div>
               <p className="font-semibold text-base">マッチおめでとう!</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                ランチの約束をしてみましょう
-              </p>
+              <p className="text-sm text-muted-foreground mt-1">ランチの約束をしてみましょう</p>
             </div>
             <div className="flex flex-col gap-2 mt-3 w-full max-w-xs">
-              {suggestions.map((s) => (
+              {SUGGESTIONS.map((s) => (
                 <button
                   key={s}
                   onClick={() => sendMessage(s)}
@@ -159,14 +137,9 @@ export default function ChatPage({
           </div>
         ) : (
           <>
-            {/* Date separator */}
             <div className="flex justify-center">
               <span className="rounded-full bg-gray-100 px-3 py-1 text-[11px] text-muted-foreground">
-                {new Date(messages[0]?.sentAt || messages[0]?.createdAt).toLocaleDateString("ja-JP", {
-                  month: "long",
-                  day: "numeric",
-                  weekday: "short",
-                })}
+                {formatDateFull(messages[0]?.sentAt || messages[0]?.createdAt)}
               </span>
             </div>
             {messages.map((msg) => {
@@ -184,15 +157,8 @@ export default function ChatPage({
                     }`}
                   >
                     <p className="text-[14px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                    <p
-                      className={`text-[10px] mt-0.5 text-right ${
-                        isMe ? "text-white/60" : "text-gray-400"
-                      }`}
-                    >
-                      {new Date(msg.sentAt || msg.createdAt).toLocaleTimeString("ja-JP", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                    <p className={`text-[10px] mt-0.5 text-right ${isMe ? "text-white/60" : "text-gray-400"}`}>
+                      {formatTime(msg.sentAt || msg.createdAt)}
                     </p>
                   </div>
                 </div>

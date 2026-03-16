@@ -1,24 +1,20 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { generateClient } from "aws-amplify/data";
-import type { Schema } from "@/types/schema";
+import { client } from "@/lib/api-client";
+import { QUERY_KEYS } from "@/constants/query-keys";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useUiStore } from "@/stores/ui-store";
 import { toast } from "sonner";
-import type { ViewableProfile } from "./SwipePage";
-
-const client = generateClient<Schema>();
+import type { ViewableProfile } from "@/types";
 
 export default function LikesPage({ userId }: { userId: string }) {
   const queryClient = useQueryClient();
   const { setMatchModal } = useUiStore();
 
-  // Check premium status
   const { data: profile } = useQuery({
-    queryKey: ["myProfile", userId],
+    queryKey: QUERY_KEYS.myProfile(userId),
     queryFn: async () => {
       const result: any = await client.models.UserProfile.get({ userId });
       return result?.data;
@@ -26,7 +22,7 @@ export default function LikesPage({ userId }: { userId: string }) {
   });
 
   const { data: likesData, isLoading } = useQuery({
-    queryKey: ["whoLikedMe", userId],
+    queryKey: QUERY_KEYS.whoLikedMe(userId),
     queryFn: async () => {
       const result: any = await client.queries.getWhoLikedMe({ limit: 20 });
       if (result?.data?.profiles) {
@@ -42,15 +38,12 @@ export default function LikesPage({ userId }: { userId: string }) {
 
   async function handleQuickSwipe(targetId: string, direction: "OK" | "SKIP") {
     try {
-      const result: any = await client.mutations.recordSwipe({
-        targetId,
-        direction,
-      });
+      const result: any = await client.mutations.recordSwipe({ targetId, direction });
       if (result?.data?.isMatch) {
         setMatchModal(true, targetId);
         toast.success("マッチしました！🎉");
       }
-      queryClient.invalidateQueries({ queryKey: ["whoLikedMe"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.whoLikedMe(userId) });
     } catch (err) {
       console.error("Swipe failed:", err);
     }
@@ -58,11 +51,8 @@ export default function LikesPage({ userId }: { userId: string }) {
 
   async function handleBecomePremium() {
     try {
-      await client.models.UserProfile.update({
-        userId,
-        isPremium: true,
-      });
-      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      await client.models.UserProfile.update({ userId, isPremium: true });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myProfile(userId) });
       toast.success("プレミアム会員になりました！");
     } catch (err) {
       console.error("Premium upgrade failed:", err);
@@ -79,19 +69,17 @@ export default function LikesPage({ userId }: { userId: string }) {
           </div>
         </div>
         <div>
-          <h2 className="text-xl font-bold mb-2">
-            あなたにいいねした人を見る
-          </h2>
+          <h2 className="text-xl font-bold mb-2">あなたにいいねした人を見る</h2>
           <p className="text-sm text-muted-foreground">
             プレミアム会員になると、あなたにOKした人が見れます
           </p>
         </div>
-        <Button
+        <button
           onClick={handleBecomePremium}
-          className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold px-8 h-12"
+          className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold px-8 h-12 rounded-xl active:scale-95 transition-all"
         >
           課金したよ！（テスト用）
-        </Button>
+        </button>
       </div>
     );
   }
@@ -107,7 +95,7 @@ export default function LikesPage({ userId }: { userId: string }) {
   return (
     <div className="p-4">
       <div className="flex items-center gap-2 mb-4">
-        <h1 className="text-xl font-bold">いいね</h1>
+        <h1 className="text-xl font-bold">お相手から</h1>
         {likesData && likesData.count > 0 && (
           <Badge className="bg-amber-500">{likesData.count}</Badge>
         )}
@@ -116,9 +104,7 @@ export default function LikesPage({ userId }: { userId: string }) {
       {!likesData || likesData.profiles.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-4 pt-20 text-center">
           <span className="text-5xl">💛</span>
-          <p className="text-muted-foreground">
-            まだいいねされていません
-          </p>
+          <p className="text-muted-foreground">まだいいねされていません</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -126,31 +112,20 @@ export default function LikesPage({ userId }: { userId: string }) {
             <Card key={liker.userId}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  {/* Photo (blurred/small) */}
                   <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
                     {liker.photo2Url ? (
-                      <img
-                        src={liker.photo2Url}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
+                      <img src={liker.photo2Url} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-2xl">
-                        🍽️
-                      </div>
+                      <div className="flex h-full w-full items-center justify-center text-2xl">🍽️</div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     {liker.department && (
-                      <p className="text-xs text-muted-foreground">
-                        {liker.department}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{liker.department}</p>
                     )}
                     <div className="flex flex-wrap gap-1 mt-1">
                       {liker.preferences?.slice(0, 3).map((p) => (
-                        <Badge key={p} variant="outline" className="text-xs">
-                          {p}
-                        </Badge>
+                        <Badge key={p} variant="outline" className="text-xs">{p}</Badge>
                       ))}
                     </div>
                   </div>

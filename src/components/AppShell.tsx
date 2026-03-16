@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { generateClient } from "aws-amplify/data";
-import type { Schema } from "@/types/schema";
 import type { AuthUser } from "aws-amplify/auth";
+import { client } from "@/lib/api-client";
 import BottomNav from "./BottomNav";
 import SwipePage from "./pages/SwipePage";
 import MatchesPage from "./pages/MatchesPage";
@@ -14,7 +13,6 @@ import MatchModal from "./MatchModal";
 import { useUiStore } from "@/stores/ui-store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const client = generateClient<Schema>();
 const queryClient = new QueryClient();
 
 type Tab = "swipe" | "matches" | "likes" | "profile";

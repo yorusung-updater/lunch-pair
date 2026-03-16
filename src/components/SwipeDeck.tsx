@@ -10,7 +10,7 @@ import {
 } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { ViewableProfile } from "./pages/SwipePage";
+import type { ViewableProfile } from "@/types";
 
 const SWIPE_THRESHOLD = 100;
 const FLY_OUT_DISTANCE = 600;

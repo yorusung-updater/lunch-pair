@@ -1,24 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { generateClient } from "aws-amplify/data";
-import { uploadData } from "aws-amplify/storage";
-import { fetchAuthSession } from "aws-amplify/auth";
-import imageCompression from "browser-image-compression";
-import type { Schema } from "@/types/schema";
+import { client } from "@/lib/api-client";
+import { compressAndUpload } from "@/utils/photo-upload";
+import { PREFERENCE_OPTIONS } from "@/constants/preferences";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-const client = generateClient<Schema>();
-
-const PREFERENCE_OPTIONS = [
-  "和食", "洋食", "中華", "韓国料理", "カレー",
-  "ラーメン", "寿司", "カフェ", "居酒屋", "ヘルシー",
-  "がっつり", "辛いもの好き", "甘党", "コーヒー好き",
-];
 
 export default function ProfileSetup({
   userId,
@@ -57,19 +47,6 @@ export default function ProfileSetup({
     setSelectedPrefs((prev) =>
       prev.includes(pref) ? prev.filter((p) => p !== pref) : [...prev, pref]
     );
-  }
-
-  async function compressAndUpload(file: File, filename: string): Promise<string> {
-    const compressed = await imageCompression(file, {
-      maxSizeMB: 1,
-      maxWidthOrHeight: 1200,
-      useWebWorker: true,
-    });
-    const session = await fetchAuthSession();
-    const identityId = session.identityId!;
-    const key = `photos/${identityId}/${filename}`;
-    await uploadData({ path: key, data: compressed });
-    return key;
   }
 
   async function handleSubmit() {

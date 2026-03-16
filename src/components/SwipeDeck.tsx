@@ -203,10 +203,18 @@ function SwipeCard({
 
       {/* Profile info */}
       <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-        {profile.department && (
-          <p className="text-sm opacity-80 mb-1">{profile.department}</p>
-        )}
-        <div className="flex flex-wrap gap-1.5 mt-2">
+        <div className="flex items-center gap-2 mb-1">
+          {profile.department && (
+            <span className="text-sm opacity-80">{profile.department}</span>
+          )}
+          {(profile.matchingPrefsCount ?? 0) > 0 && (
+            <span className="rounded-full bg-orange-500 px-2.5 py-0.5 text-[11px] font-semibold">
+              共通 {profile.matchingPrefsCount}件
+            </span>
+          )}
+        </div>
+        {/* Preferences */}
+        <div className="flex flex-wrap gap-1.5 mt-1.5">
           {profile.preferences?.map((pref) => (
             <Badge
               key={pref}
@@ -218,7 +226,7 @@ function SwipeCard({
           ))}
         </div>
         {profile.preferenceFreeText && (
-          <p className="mt-2 text-sm opacity-90">
+          <p className="mt-1.5 text-sm opacity-90">
             {profile.preferenceFreeText}
           </p>
         )}

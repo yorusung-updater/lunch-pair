@@ -10,6 +10,11 @@ export type ViewableProfile = {
   preferences: string[];
   preferenceFreeText: string | null;
   department: string | null;
+  lunchDays: string[] | null;
+  lunchTime: string | null;
+  lunchBudget: string | null;
+  lunchArea: string | null;
+  matchingPrefsCount?: number;
   isMatched: boolean;
 };
 

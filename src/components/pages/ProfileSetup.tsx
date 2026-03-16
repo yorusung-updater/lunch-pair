@@ -4,6 +4,7 @@ import { useState } from "react";
 import { client } from "@/lib/api-client";
 import { compressAndUpload } from "@/utils/photo-upload";
 import { PREFERENCE_OPTIONS } from "@/constants/preferences";
+import { LUNCH_DAYS, LUNCH_TIMES, LUNCH_BUDGETS, LUNCH_AREAS } from "@/constants/lunch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,10 @@ export default function ProfileSetup({
   const [photo2Preview, setPhoto2Preview] = useState<string | null>(null);
   const [photo3Preview, setPhoto3Preview] = useState<string | null>(null);
   const [photo4Preview, setPhoto4Preview] = useState<string | null>(null);
+  const [selectedLunchDays, setSelectedLunchDays] = useState<string[]>([]);
+  const [lunchTime, setLunchTime] = useState("");
+  const [lunchBudget, setLunchBudget] = useState("");
+  const [lunchArea, setLunchArea] = useState("");
   const [loading, setLoading] = useState(false);
 
   function handleFileChange(
@@ -79,6 +84,10 @@ export default function ProfileSetup({
         preferences: selectedPrefs,
         preferenceFreeText: preferenceFreeText || undefined,
         department: department || undefined,
+        lunchDays: selectedLunchDays.length > 0 ? selectedLunchDays : undefined,
+        lunchTime: lunchTime || undefined,
+        lunchBudget: lunchBudget || undefined,
+        lunchArea: lunchArea || undefined,
         hasUnlimitedSwipe: false,
         hasLikesReveal: false,
       });
@@ -245,6 +254,93 @@ export default function ProfileSetup({
                 placeholder="例: 新しいお店を開拓したい！"
                 className="mt-1"
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Lunch Preferences */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">🍽️ ランチ設定</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>ランチ可能な曜日</Label>
+              <div className="flex gap-2 mt-2">
+                {LUNCH_DAYS.map((day) => (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => setSelectedLunchDays((prev) =>
+                      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+                    )}
+                    className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all ${
+                      selectedLunchDays.includes(day)
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label>希望時間</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {LUNCH_TIMES.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setLunchTime(lunchTime === t ? "" : t)}
+                    className={`rounded-full px-3 py-1.5 text-sm transition-all ${
+                      lunchTime === t
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label>予算</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {LUNCH_BUDGETS.map((b) => (
+                  <button
+                    key={b}
+                    type="button"
+                    onClick={() => setLunchBudget(lunchBudget === b ? "" : b)}
+                    className={`rounded-full px-3 py-1.5 text-sm transition-all ${
+                      lunchBudget === b
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {b}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label>エリア</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {LUNCH_AREAS.map((a) => (
+                  <button
+                    key={a}
+                    type="button"
+                    onClick={() => setLunchArea(lunchArea === a ? "" : a)}
+                    className={`rounded-full px-3 py-1.5 text-sm transition-all ${
+                      lunchArea === a
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {a}
+                  </button>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>

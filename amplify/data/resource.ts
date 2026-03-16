@@ -45,6 +45,10 @@ const schema = a.schema({
       preferences: a.string().array(),
       preferenceFreeText: a.string(),
       department: a.string(),
+      lunchDays: a.string().array(),      // ["月","火","水","木","金"]
+      lunchTime: a.string(),              // "12:00" etc.
+      lunchBudget: a.string(),            // "~1000円" etc.
+      lunchArea: a.string(),              // "本社周辺" etc.
       hasUnlimitedSwipe: a.boolean().default("false"),
       hasLikesReveal: a.boolean().default("false"),
     })
@@ -120,6 +124,10 @@ const schema = a.schema({
     preferences: a.string().array(),
     preferenceFreeText: a.string(),
     department: a.string(),
+    lunchDays: a.string().array(),
+    lunchTime: a.string(),
+    lunchBudget: a.string(),
+    lunchArea: a.string(),
     isMatched: a.boolean(),
   }),
 
@@ -149,6 +157,10 @@ const schema = a.schema({
     .query()
     .arguments({
       department: a.string(),
+      lunchDay: a.string(),
+      lunchTime: a.string(),
+      lunchBudget: a.string(),
+      lunchArea: a.string(),
       limit: a.integer(),
       nextToken: a.string(),
     })

@@ -29,20 +29,20 @@ export default function StatsPanel() {
   });
 
   const totalUsers = users?.length ?? 0;
-  const premiumUsers = users?.filter((u: any) => u.isPremium).length ?? 0;
+  const swipePackUsers = users?.filter((u: any) => u.hasUnlimitedSwipe).length ?? 0;
+  const likesPackUsers = users?.filter((u: any) => u.hasLikesReveal).length ?? 0;
   const totalMatches = matches?.length ?? 0;
   const totalSwipes = swipes?.length ?? 0;
   const okSwipes = swipes?.filter((s: any) => s.direction === "OK").length ?? 0;
-  const skipSwipes = totalSwipes - okSwipes;
-  const matchRate = totalSwipes > 0 ? ((totalMatches * 2) / okSwipes * 100).toFixed(1) : "0";
+  const matchRate = okSwipes > 0 ? ((totalMatches * 2) / okSwipes * 100).toFixed(1) : "0";
 
   const stats = [
     { label: "総ユーザー数", value: totalUsers, icon: "👥", color: "bg-blue-50 text-blue-700" },
-    { label: "プレミアム会員", value: premiumUsers, icon: "⭐", color: "bg-amber-50 text-amber-700" },
+    { label: "スワイプし放題", value: swipePackUsers, icon: "🔄", color: "bg-indigo-50 text-indigo-700" },
+    { label: "いいね見放題", value: likesPackUsers, icon: "👀", color: "bg-amber-50 text-amber-700" },
     { label: "総マッチ数", value: totalMatches, icon: "💑", color: "bg-pink-50 text-pink-700" },
     { label: "総スワイプ数", value: totalSwipes, icon: "👆", color: "bg-green-50 text-green-700" },
     { label: "いいかも率", value: `${totalSwipes > 0 ? (okSwipes / totalSwipes * 100).toFixed(0) : 0}%`, icon: "❤️", color: "bg-rose-50 text-rose-700" },
-    { label: "マッチ率", value: `${matchRate}%`, icon: "🎯", color: "bg-purple-50 text-purple-700" },
   ];
 
   return (

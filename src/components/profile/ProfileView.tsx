@@ -8,7 +8,8 @@ interface ProfileViewProps {
     department: string | null;
     preferenceFreeText: string | null;
     preferences: string[] | null;
-    isPremium: boolean;
+    hasUnlimitedSwipe: boolean;
+    hasLikesReveal: boolean;
     photo1Url: string | null;
     photo2Url: string | null;
     photo3Url: string | null;
@@ -55,12 +56,18 @@ export default function ProfileView({ profile, onEdit, onPhotoUpdate, signOut }:
           編集
         </button>
 
-        {profile.isPremium && (
-          <div className="absolute top-4 left-4 flex items-center gap-1 rounded-full bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-            プレミアム
+        {(profile.hasUnlimitedSwipe || profile.hasLikesReveal) && (
+          <div className="absolute top-4 left-4 flex flex-col gap-1">
+            {profile.hasUnlimitedSwipe && (
+              <div className="flex items-center gap-1 rounded-full bg-blue-500 px-3 py-1.5 text-[10px] font-semibold text-white shadow-sm">
+                スワイプし放題
+              </div>
+            )}
+            {profile.hasLikesReveal && (
+              <div className="flex items-center gap-1 rounded-full bg-amber-500 px-3 py-1.5 text-[10px] font-semibold text-white shadow-sm">
+                いいね見放題
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -113,7 +120,13 @@ export default function ProfileView({ profile, onEdit, onPhotoUpdate, signOut }:
             <div className="flex-1">
               <p className="text-xs text-gray-400">ステータス</p>
               <p className="text-sm font-medium text-gray-700">
-                {profile.isPremium ? "プレミアム会員" : "無料会員"}
+                {profile.hasUnlimitedSwipe && profile.hasLikesReveal
+                  ? "スワイプし放題 + いいね見放題"
+                  : profile.hasUnlimitedSwipe
+                  ? "スワイプし放題パック"
+                  : profile.hasLikesReveal
+                  ? "いいね見放題パック"
+                  : "無料会員"}
               </p>
             </div>
           </div>

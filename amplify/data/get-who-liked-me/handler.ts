@@ -45,7 +45,7 @@ export const handler: AppSyncResolverHandler<Args, Result> = async (event) => {
   const myProfile = await ddb.send(
     new GetCommand({ TableName: USERPROFILE_TABLE, Key: { userId } })
   );
-  if (!myProfile.Item?.isPremium) {
+  if (!myProfile.Item?.hasLikesReveal) {
     return { profiles: JSON.stringify([]), count: 0 };
   }
 

@@ -45,7 +45,8 @@ const schema = a.schema({
       preferences: a.string().array(),
       preferenceFreeText: a.string(),
       department: a.string(),
-      isPremium: a.boolean().default("false"),
+      hasUnlimitedSwipe: a.boolean().default("false"),
+      hasLikesReveal: a.boolean().default("false"),
     })
     .identifier(["userId"])
     .secondaryIndexes((index) => [index("department")])
@@ -106,6 +107,7 @@ const schema = a.schema({
     swipeRecorded: a.boolean(),
     isMatch: a.boolean(),
     matchedUserId: a.string(),
+    dailySwipesRemaining: a.integer(),
   }),
 
   ViewableProfile: a.customType({

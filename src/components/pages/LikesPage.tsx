@@ -33,7 +33,7 @@ export default function LikesPage({ userId }: { userId: string }) {
       }
       return { profiles: [], count: 0 };
     },
-    enabled: !!profile?.isPremium,
+    enabled: !!profile?.hasLikesReveal,
   });
 
   async function handleQuickSwipe(targetId: string, direction: "OK" | "SKIP") {
@@ -51,15 +51,15 @@ export default function LikesPage({ userId }: { userId: string }) {
 
   async function handleBecomePremium() {
     try {
-      await client.models.UserProfile.update({ userId, isPremium: true });
+      await client.models.UserProfile.update({ userId, hasLikesReveal: true });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myProfile(userId) });
-      toast.success("プレミアム会員になりました！");
+      toast.success("いいね見放題パックを有効にしました！");
     } catch (err) {
       console.error("Premium upgrade failed:", err);
     }
   }
 
-  if (!profile?.isPremium) {
+  if (!profile?.hasLikesReveal) {
     return (
       <div className="flex flex-col items-center justify-center gap-6 p-8 pt-20 text-center">
         <div className="relative">
@@ -71,15 +71,18 @@ export default function LikesPage({ userId }: { userId: string }) {
         <div>
           <h2 className="text-xl font-bold mb-2">あなたにいいねした人を見る</h2>
           <p className="text-sm text-muted-foreground">
-            プレミアム会員になると、あなたにOKした人が見れます
+            いいね見放題パックを有効にすると、あなたにOKした人が見れます
           </p>
         </div>
         <button
           onClick={handleBecomePremium}
           className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold px-8 h-12 rounded-xl active:scale-95 transition-all"
         >
-          課金したよ！（テスト用）
+          いいね見放題パックを有効にする
         </button>
+        <p className="text-[11px] text-gray-400">
+          ※テスト機能のため、実際の課金は発生しません
+        </p>
       </div>
     );
   }

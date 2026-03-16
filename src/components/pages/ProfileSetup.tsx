@@ -79,7 +79,8 @@ export default function ProfileSetup({
         preferences: selectedPrefs,
         preferenceFreeText: preferenceFreeText || undefined,
         department: department || undefined,
-        isPremium: false,
+        hasUnlimitedSwipe: false,
+        hasLikesReveal: false,
       });
 
       onComplete();

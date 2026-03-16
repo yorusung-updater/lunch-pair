@@ -1,0 +1,7 @@
+{
+  "name": "amplify-backend",
+  "type": "module",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145"
+  }
+}

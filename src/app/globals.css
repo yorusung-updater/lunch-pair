@@ -122,8 +122,19 @@
   }
   body {
     @apply bg-background text-foreground;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
   }
   html {
     @apply font-sans;
   }
+}
+
+/* Amplify Authenticator overrides for mobile */
+[data-amplify-authenticator] {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
 }

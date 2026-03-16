@@ -71,7 +71,7 @@ export default function SwipeDeck({
             animate={{ scale: 1.2, opacity: 1 }}
             transition={{ duration: 0.2 }}
           >
-            {lastAction === "OK" ? "いいかも！" : "イマイチ"}
+            {lastAction === "OK" ? "いいかも！" : "また今度"}
           </motion.span>
         </motion.div>
       )}
@@ -95,7 +95,7 @@ export default function SwipeDeck({
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </div>
-          <span className="text-[10px] text-gray-400 font-medium">イマイチ</span>
+          <span className="text-[10px] text-gray-400 font-medium">また今度</span>
         </button>
         <button
           onClick={() => handleSwipeComplete("OK")}
@@ -197,7 +197,7 @@ function SwipeCard({
         style={{ opacity: skipOpacity }}
       >
         <span className="text-3xl font-black text-gray-300 drop-shadow-md">
-          イマイチ
+          また今度
         </span>
       </motion.div>
 

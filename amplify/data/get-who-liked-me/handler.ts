@@ -109,6 +109,6 @@ export const handler: AppSyncResolverHandler<Args, Result> = async (event) => {
 
   return {
     profiles: JSON.stringify(profiles.filter(Boolean)),
-    count: likers.length,
+    count: unseenLikers.length,
   };
 };

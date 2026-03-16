@@ -69,7 +69,7 @@ export default function SwipeTutorial({
               </svg>
             </div>
             <div>
-              <p className="font-semibold text-sm">左スワイプ → イマイチ</p>
+              <p className="font-semibold text-sm">左スワイプ → また今度</p>
               <p className="text-xs text-muted-foreground">
                 今回はパスしたい相手を左にスワイプ、または✕ボタンを押してください
               </p>

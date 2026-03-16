@@ -12,6 +12,13 @@ export const metadata: Metadata = {
   title: "Lunch Pair",
   description: "社内マッチングアプリ",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/icons/icon-192.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

@@ -59,7 +59,7 @@ export default function SwipeDeck({
       {lastAction && (
         <motion.div
           className={`pointer-events-none absolute inset-0 z-30 flex items-center justify-center rounded-2xl ${
-            lastAction === "OK" ? "bg-green-500/30" : "bg-gray-500/30"
+            lastAction === "OK" ? "bg-pink-500/30" : "bg-gray-500/30"
           }`}
           initial={{ opacity: 1 }}
           animate={{ opacity: 0 }}
@@ -71,7 +71,7 @@ export default function SwipeDeck({
             animate={{ scale: 1.2, opacity: 1 }}
             transition={{ duration: 0.2 }}
           >
-            {lastAction === "OK" ? "気になる！" : "また今度"}
+            {lastAction === "OK" ? "いいかも！" : "イマイチ"}
           </motion.span>
         </motion.div>
       )}
@@ -84,24 +84,31 @@ export default function SwipeDeck({
       />
 
       {/* Action Buttons */}
-      <div className="mt-4 flex w-full max-w-xs justify-center gap-8">
-        <Button
-          variant="outline"
-          size="lg"
-          className="h-16 w-16 rounded-full text-2xl border-2 border-gray-300 text-gray-400 hover:bg-gray-100 active:scale-90 transition-transform"
+      <div className="mt-4 flex w-full max-w-xs justify-center gap-6">
+        <button
           onClick={() => handleSwipeComplete("SKIP")}
           disabled={swiping || !!lastAction}
+          className="flex flex-col items-center gap-1 disabled:opacity-40 transition-all active:scale-90"
         >
-          👋
-        </Button>
-        <Button
-          size="lg"
-          className="h-16 w-16 rounded-full text-2xl bg-green-500 hover:bg-green-600 active:scale-90 transition-transform"
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-gray-300 bg-white shadow-sm">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </div>
+          <span className="text-[10px] text-gray-400 font-medium">イマイチ</span>
+        </button>
+        <button
           onClick={() => handleSwipeComplete("OK")}
           disabled={swiping || !!lastAction}
+          className="flex flex-col items-center gap-1 disabled:opacity-40 transition-all active:scale-90"
         >
-          👍
-        </Button>
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-rose-500 shadow-md shadow-pink-200">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="white" stroke="none">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </div>
+          <span className="text-[10px] text-pink-500 font-medium">いいかも！</span>
+        </button>
       </div>
     </div>
   );
@@ -165,7 +172,7 @@ function SwipeCard({
 
       {/* Direction tint overlays */}
       <motion.div
-        className="pointer-events-none absolute inset-0 bg-green-500"
+        className="pointer-events-none absolute inset-0 bg-pink-500"
         style={{ opacity: bgGreen }}
       />
       <motion.div
@@ -178,19 +185,19 @@ function SwipeCard({
 
       {/* OK / SKIP stamp indicators */}
       <motion.div
-        className="absolute left-6 top-6 rounded-lg border-4 border-green-400 bg-green-500/20 px-5 py-2 -rotate-12"
+        className="absolute left-6 top-6 rounded-xl border-4 border-pink-400 bg-pink-500/20 px-5 py-2 -rotate-12"
         style={{ opacity: okOpacity }}
       >
-        <span className="text-3xl font-black text-green-400 drop-shadow-md">
-          気になる！
+        <span className="text-3xl font-black text-pink-400 drop-shadow-md">
+          いいかも！
         </span>
       </motion.div>
       <motion.div
-        className="absolute right-6 top-6 rounded-lg border-4 border-gray-400 bg-gray-500/20 px-4 py-2 rotate-12"
+        className="absolute right-6 top-6 rounded-xl border-4 border-gray-400 bg-gray-800/20 px-5 py-2 rotate-12"
         style={{ opacity: skipOpacity }}
       >
         <span className="text-3xl font-black text-gray-300 drop-shadow-md">
-          また今度
+          イマイチ
         </span>
       </motion.div>
 

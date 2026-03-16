@@ -155,20 +155,21 @@ export default function LikesPage({ userId }: { userId: string }) {
                     </div>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Button
-                      size="sm"
-                      className="bg-green-500 hover:bg-green-600 text-white"
+                    <button
+                      className="flex items-center gap-1 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm active:scale-95 transition-all"
                       onClick={() => handleQuickSwipe(liker.userId, "OK")}
                     >
-                      OK
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                      </svg>
+                      いいかも
+                    </button>
+                    <button
+                      className="rounded-full border border-gray-200 px-3 py-1.5 text-xs text-gray-400 active:scale-95 transition-all"
                       onClick={() => handleQuickSwipe(liker.userId, "SKIP")}
                     >
-                      SKIP
-                    </Button>
+                      スキップ
+                    </button>
                   </div>
                 </div>
               </CardContent>

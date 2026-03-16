@@ -85,6 +85,21 @@ const schema = a.schema({
       allow.authenticated(),
     ]),
 
+  ChatMessage: a
+    .model({
+      chatId: a.string().required(), // sorted "{user1Id}_{user2Id}"
+      senderId: a.id().required(),
+      content: a.string().required(),
+      messageType: a.enum(["TEXT", "PLAN"]),
+      sentAt: a.datetime().required(),
+    })
+    .secondaryIndexes((index) => [
+      index("chatId").sortKeys(["sentAt"]),
+    ])
+    .authorization((allow) => [
+      allow.authenticated(),
+    ]),
+
   // ========== Custom Types ==========
 
   RecordSwipeResponse: a.customType({

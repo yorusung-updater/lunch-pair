@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/types/schema";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -13,33 +12,54 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { ViewableProfile } from "./SwipePage";
+import ChatPage from "./ChatPage";
 
 const client = generateClient<Schema>();
 
+type MatchEntry = {
+  matchedUserId: string;
+  displayName: string;
+  matchedAt: string | null;
+  photoUrl: string | null;
+};
+
 export default function MatchesPage({ userId }: { userId: string }) {
-  const [selectedMatch, setSelectedMatch] = useState<ViewableProfile | null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<ViewableProfile | null>(
+    null
+  );
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [chatTarget, setChatTarget] = useState<MatchEntry | null>(null);
 
   const { data: matches, isLoading } = useQuery({
     queryKey: ["matches", userId],
     queryFn: async () => {
-      const [r1, r2] = await Promise.all([
+      const [r1, r2]: any[] = await Promise.all([
         client.models.Match.listMatchByUser1Id({ user1Id: userId }),
         client.models.Match.listMatchByUser2Id({ user2Id: userId }),
       ]);
-      const all = [
-        ...r1.data.map((m) => ({
+      const raw = [
+        ...(r1?.data ?? []).map((m: any) => ({
           matchedUserId: m.user2Id,
           displayName: m.user2DisplayName ?? "?",
           matchedAt: m.createdAt,
         })),
-        ...r2.data.map((m) => ({
+        ...(r2?.data ?? []).map((m: any) => ({
           matchedUserId: m.user1Id,
           displayName: m.user1DisplayName ?? "?",
           matchedAt: m.createdAt,
         })),
       ];
-      // Sort by most recent
+      // Fetch face photos for each match
+      const all: MatchEntry[] = await Promise.all(
+        raw.map(async (m: any) => {
+          try {
+            const p: any = await client.queries.getProfileForViewing({ targetUserId: m.matchedUserId });
+            return { ...m, photoUrl: p?.data?.photo1Url ?? null };
+          } catch {
+            return { ...m, photoUrl: null };
+          }
+        })
+      );
       return all.sort((a, b) =>
         (b.matchedAt ?? "").localeCompare(a.matchedAt ?? "")
       );
@@ -60,6 +80,18 @@ export default function MatchesPage({ userId }: { userId: string }) {
     } finally {
       setLoadingProfile(false);
     }
+  }
+
+  // Chat view (full screen)
+  if (chatTarget) {
+    return (
+      <ChatPage
+        userId={userId}
+        matchedUserId={chatTarget.matchedUserId}
+        matchedUserName={chatTarget.displayName}
+        onBack={() => setChatTarget(null)}
+      />
+    );
   }
 
   if (isLoading) {
@@ -84,25 +116,51 @@ export default function MatchesPage({ userId }: { userId: string }) {
       ) : (
         <div className="space-y-3">
           {matches.map((match) => (
-            <Card
+            <div
               key={match.matchedUserId}
-              className="cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => viewProfile(match.matchedUserId)}
+              onClick={() => setChatTarget(match)}
+              className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
             >
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-xl">
-                  💑
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold">{match.displayName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {match.matchedAt
-                      ? new Date(match.matchedAt).toLocaleDateString("ja-JP")
-                      : ""}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              {/* Profile photo */}
+              <div
+                className="relative shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  viewProfile(match.matchedUserId);
+                }}
+              >
+                {match.photoUrl ? (
+                  <img
+                    src={match.photoUrl}
+                    alt={match.displayName}
+                    className="h-14 w-14 rounded-full object-cover border-2 border-orange-200"
+                  />
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-100 text-lg font-bold text-orange-600 border-2 border-orange-200">
+                    {match.displayName.charAt(0)}
+                  </div>
+                )}
+                <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-green-400 border-2 border-white" />
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-[15px] truncate">{match.displayName}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {match.matchedAt
+                    ? new Date(match.matchedAt).toLocaleDateString("ja-JP", { month: "short", day: "numeric" }) + " マッチ"
+                    : ""}
+                </p>
+              </div>
+
+              {/* Chat CTA */}
+              <div className="flex items-center gap-1.5 shrink-0 rounded-full bg-orange-50 px-3.5 py-2 text-orange-600">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                <span className="text-xs font-semibold">話す</span>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -124,7 +182,6 @@ export default function MatchesPage({ userId }: { userId: string }) {
             </div>
           ) : selectedMatch ? (
             <div className="space-y-4">
-              {/* Face photo (revealed after match!) */}
               {selectedMatch.photo1Url && (
                 <img
                   src={selectedMatch.photo1Url}
@@ -147,7 +204,7 @@ export default function MatchesPage({ userId }: { userId: string }) {
               {selectedMatch.preferences &&
                 selectedMatch.preferences.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
-                    {selectedMatch.preferences.map((p) => (
+                    {selectedMatch.preferences.map((p: string) => (
                       <Badge key={p} variant="secondary">
                         {p}
                       </Badge>

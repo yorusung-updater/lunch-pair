@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/types/schema";
 import SwipeDeck from "../SwipeDeck";
+import SwipeTutorial from "../SwipeTutorial";
 import { useUiStore } from "@/stores/ui-store";
 import { toast } from "sonner";
 
@@ -25,6 +26,7 @@ export type ViewableProfile = {
 
 export default function SwipePage({ userId }: { userId: string }) {
   const [nextToken, setNextToken] = useState<string | null>(null);
+  const [tutorialDone, setTutorialDone] = useState(false);
   const queryClient = useQueryClient();
   const { setMatchModal } = useUiStore();
 
@@ -89,14 +91,17 @@ export default function SwipePage({ userId }: { userId: string }) {
 
   return (
     <div className="relative h-full">
+      <SwipeTutorial onDone={() => setTutorialDone(true)} />
       <div className="px-4 pt-4 pb-2">
         <h1 className="text-xl font-bold">Lunch Pair</h1>
       </div>
-      <SwipeDeck
-        profiles={candidates}
-        onSwipe={handleSwipe}
-        onEmpty={handleEmpty}
-      />
+      {tutorialDone && (
+        <SwipeDeck
+          profiles={candidates}
+          onSwipe={handleSwipe}
+          onEmpty={handleEmpty}
+        />
+      )}
     </div>
   );
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useCallback } from "react";
 import {
   motion,
   useMotionValue,
   useTransform,
+  animate,
   type PanInfo,
 } from "motion/react";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import type { ViewableProfile } from "./pages/SwipePage";
 
 const SWIPE_THRESHOLD = 100;
+const FLY_OUT_DISTANCE = 600;
 
 export default function SwipeDeck({
   profiles,
@@ -24,6 +26,20 @@ export default function SwipeDeck({
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swiping, setSwiping] = useState(false);
+  const [lastAction, setLastAction] = useState<"OK" | "SKIP" | null>(null);
+
+  const handleSwipeComplete = useCallback(
+    (direction: "OK" | "SKIP") => {
+      setSwiping(false);
+      setLastAction(direction);
+      onSwipe(profiles[currentIndex].userId, direction);
+      setTimeout(() => {
+        setCurrentIndex((i) => i + 1);
+        setLastAction(null);
+      }, 300);
+    },
+    [currentIndex, onSwipe, profiles]
+  );
 
   if (currentIndex >= profiles.length) {
     onEmpty();
@@ -39,15 +55,31 @@ export default function SwipeDeck({
 
   return (
     <div className="relative mx-auto flex h-[calc(100dvh-140px)] max-w-lg flex-col items-center px-4">
+      {/* Flash overlay for button taps */}
+      {lastAction && (
+        <motion.div
+          className={`pointer-events-none absolute inset-0 z-30 flex items-center justify-center rounded-2xl ${
+            lastAction === "OK" ? "bg-green-500/30" : "bg-gray-500/30"
+          }`}
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <motion.span
+            className="text-6xl font-black text-white drop-shadow-lg"
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1.2, opacity: 1 }}
+            transition={{ duration: 0.2 }}
+          >
+            {lastAction === "OK" ? "気になる！" : "また今度"}
+          </motion.span>
+        </motion.div>
+      )}
+
       <SwipeCard
         key={profile.userId}
         profile={profile}
-        swiping={swiping}
-        onSwipeComplete={(direction) => {
-          setSwiping(false);
-          onSwipe(profile.userId, direction);
-          setCurrentIndex((i) => i + 1);
-        }}
+        onSwipeComplete={handleSwipeComplete}
         onSwipeStart={() => setSwiping(true)}
       />
 
@@ -56,25 +88,19 @@ export default function SwipeDeck({
         <Button
           variant="outline"
           size="lg"
-          className="h-16 w-16 rounded-full text-2xl border-2 border-destructive text-destructive hover:bg-destructive/10"
-          onClick={() => {
-            onSwipe(profile.userId, "SKIP");
-            setCurrentIndex((i) => i + 1);
-          }}
-          disabled={swiping}
+          className="h-16 w-16 rounded-full text-2xl border-2 border-gray-300 text-gray-400 hover:bg-gray-100 active:scale-90 transition-transform"
+          onClick={() => handleSwipeComplete("SKIP")}
+          disabled={swiping || !!lastAction}
         >
-          ✕
+          👋
         </Button>
         <Button
           size="lg"
-          className="h-16 w-16 rounded-full text-2xl bg-green-500 hover:bg-green-600"
-          onClick={() => {
-            onSwipe(profile.userId, "OK");
-            setCurrentIndex((i) => i + 1);
-          }}
-          disabled={swiping}
+          className="h-16 w-16 rounded-full text-2xl bg-green-500 hover:bg-green-600 active:scale-90 transition-transform"
+          onClick={() => handleSwipeComplete("OK")}
+          disabled={swiping || !!lastAction}
         >
-          ♥
+          👍
         </Button>
       </div>
     </div>
@@ -85,34 +111,35 @@ function SwipeCard({
   profile,
   onSwipeComplete,
   onSwipeStart,
-  swiping,
 }: {
   profile: ViewableProfile;
   onSwipeComplete: (direction: "OK" | "SKIP") => void;
   onSwipeStart: () => void;
-  swiping: boolean;
 }) {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
-  const okOpacity = useTransform(x, [0, 100], [0, 1]);
-  const skipOpacity = useTransform(x, [-100, 0], [1, 0]);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const okOpacity = useTransform(x, [0, SWIPE_THRESHOLD], [0, 1]);
+  const skipOpacity = useTransform(x, [-SWIPE_THRESHOLD, 0], [1, 0]);
+
+  // Background tint based on swipe direction
+  const bgGreen = useTransform(x, [0, SWIPE_THRESHOLD], [0, 0.25]);
+  const bgRed = useTransform(x, [-SWIPE_THRESHOLD, 0], [0.25, 0]);
 
   function handleDragEnd(_: unknown, info: PanInfo) {
     if (Math.abs(info.offset.x) > SWIPE_THRESHOLD) {
       const direction = info.offset.x > 0 ? "OK" : "SKIP";
-      onSwipeComplete(direction);
+      const target = direction === "OK" ? FLY_OUT_DISTANCE : -FLY_OUT_DISTANCE;
+      animate(x, target, { duration: 0.3 });
+      setTimeout(() => onSwipeComplete(direction), 200);
+    } else {
+      animate(x, 0, { type: "spring", stiffness: 500, damping: 30 });
     }
   }
 
-  // Main photo to show (photo2 = non-face, shown before match)
   const mainPhoto = profile.photo2Url;
-  // Additional photos (photo3, photo4)
-  const extraPhotos = [profile.photo3Url, profile.photo4Url].filter(Boolean);
 
   return (
     <motion.div
-      ref={containerRef}
       className="relative w-full flex-1 cursor-grab overflow-hidden rounded-2xl bg-card shadow-xl active:cursor-grabbing"
       style={{ x, rotate }}
       drag="x"
@@ -136,21 +163,35 @@ function SwipeCard({
         </div>
       )}
 
+      {/* Direction tint overlays */}
+      <motion.div
+        className="pointer-events-none absolute inset-0 bg-green-500"
+        style={{ opacity: bgGreen }}
+      />
+      <motion.div
+        className="pointer-events-none absolute inset-0 bg-gray-500"
+        style={{ opacity: bgRed }}
+      />
+
       {/* Gradient overlay */}
       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 to-transparent" />
 
-      {/* OK / SKIP indicators */}
+      {/* OK / SKIP stamp indicators */}
       <motion.div
-        className="absolute left-6 top-6 rounded-lg border-4 border-green-500 px-4 py-2"
+        className="absolute left-6 top-6 rounded-lg border-4 border-green-400 bg-green-500/20 px-5 py-2 -rotate-12"
         style={{ opacity: okOpacity }}
       >
-        <span className="text-3xl font-black text-green-500">OK</span>
+        <span className="text-3xl font-black text-green-400 drop-shadow-md">
+          気になる！
+        </span>
       </motion.div>
       <motion.div
-        className="absolute right-6 top-6 rounded-lg border-4 border-red-500 px-4 py-2"
+        className="absolute right-6 top-6 rounded-lg border-4 border-gray-400 bg-gray-500/20 px-4 py-2 rotate-12"
         style={{ opacity: skipOpacity }}
       >
-        <span className="text-3xl font-black text-red-500">SKIP</span>
+        <span className="text-3xl font-black text-gray-300 drop-shadow-md">
+          また今度
+        </span>
       </motion.div>
 
       {/* Profile info */}
@@ -170,7 +211,9 @@ function SwipeCard({
           ))}
         </div>
         {profile.preferenceFreeText && (
-          <p className="mt-2 text-sm opacity-90">{profile.preferenceFreeText}</p>
+          <p className="mt-2 text-sm opacity-90">
+            {profile.preferenceFreeText}
+          </p>
         )}
       </div>
     </motion.div>

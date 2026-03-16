@@ -53,7 +53,7 @@ export const handler: AppSyncResolverHandler<Args, Result> = async (event) => {
   const likesResult = await ddb.send(
     new QueryCommand({
       TableName: SWIPE_TABLE,
-      IndexName: "targetId-swiperId-index",
+      IndexName: "swipesByTargetIdAndSwiperId",
       KeyConditionExpression: "targetId = :tid",
       ExpressionAttributeValues: { ":tid": userId },
     })
@@ -67,7 +67,7 @@ export const handler: AppSyncResolverHandler<Args, Result> = async (event) => {
   const mySwipes = await ddb.send(
     new QueryCommand({
       TableName: SWIPE_TABLE,
-      IndexName: "swiperId-targetId-index",
+      IndexName: "swipesBySwiperIdAndTargetId",
       KeyConditionExpression: "swiperId = :sid",
       ExpressionAttributeValues: { ":sid": userId },
     })

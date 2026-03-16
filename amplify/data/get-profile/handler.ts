@@ -1,88 +1,80 @@
 import type { AppSyncResolverHandler } from "aws-lambda";
-import { Amplify } from "aws-amplify";
-import { generateClient } from "aws-amplify/api";
-import { getUrl } from "aws-amplify/storage";
-import { env } from "$amplify/env/get-profile";
-import type { Schema } from "../resource";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-Amplify.configure(
-  {
-    API: {
-      GraphQL: {
-        endpoint: env.AMPLIFY_DATA_GRAPHQL_ENDPOINT,
-        region: env.AWS_REGION,
-        defaultAuthMode: "iam",
-      },
-    },
-    Storage: {
-      S3: {
-        bucket: env.AMPLIFY_STORAGE_BUCKET_NAME,
-        region: env.AWS_REGION,
-      },
-    },
-  },
-  { Auth: { credentialsProvider: { getCredentialsAndIdentityId: async () => ({ credentials: { accessKeyId: env.AWS_ACCESS_KEY_ID, secretAccessKey: env.AWS_SECRET_ACCESS_KEY, sessionToken: env.AWS_SESSION_TOKEN } }), clearCredentialsAndIdentityId: () => {} } } }
-);
+const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const s3 = new S3Client({});
+const USERPROFILE_TABLE = process.env.USERPROFILE_TABLE!;
+const MATCH_TABLE = process.env.MATCH_TABLE!;
+const STORAGE_BUCKET = process.env.STORAGE_BUCKET!;
 
-const client = generateClient<Schema>();
+type Args = { targetUserId: string };
 
-type Args = {
-  targetUserId: string;
+type ViewableProfile = {
+  userId: string;
+  displayName: string | null;
+  photo1Url: string | null;
+  photo2Url: string | null;
+  photo3Url: string | null;
+  photo4Url: string | null;
+  preferences: string[];
+  preferenceFreeText: string | null;
+  department: string | null;
+  isMatched: boolean;
 };
 
-export const handler: AppSyncResolverHandler<Args, Schema["ViewableProfile"]["type"]> = async (event) => {
-  const callerId = event.identity && "sub" in event.identity ? event.identity.sub : "";
+async function presign(key: string | undefined | null): Promise<string | null> {
+  if (!key) return null;
+  try {
+    return await getSignedUrl(
+      s3,
+      new GetObjectCommand({ Bucket: STORAGE_BUCKET, Key: key }),
+      { expiresIn: 3600 }
+    );
+  } catch {
+    return null;
+  }
+}
+
+export const handler: AppSyncResolverHandler<Args, ViewableProfile> = async (
+  event
+) => {
+  const callerId =
+    event.identity && "sub" in event.identity ? event.identity.sub : "";
   const { targetUserId } = event.arguments;
 
-  if (!callerId) {
-    throw new Error("Unauthorized");
-  }
+  if (!callerId) throw new Error("Unauthorized");
 
   // Check match status
   const [id1, id2] = [callerId, targetUserId].sort();
-  let isMatched = false;
-
-  try {
-    const match = await client.models.Match.get({ user1Id: id1, user2Id: id2 });
-    isMatched = !!match.data;
-  } catch {
-    isMatched = false;
-  }
+  const matchResult = await ddb.send(
+    new GetCommand({
+      TableName: MATCH_TABLE,
+      Key: { user1Id: id1, user2Id: id2 },
+    })
+  );
+  const isMatched = !!matchResult.Item;
 
   // Fetch target profile
-  const profile = await client.models.UserProfile.get({ userId: targetUserId });
-  if (!profile.data) {
-    throw new Error("Profile not found");
-  }
+  const profileResult = await ddb.send(
+    new GetCommand({
+      TableName: USERPROFILE_TABLE,
+      Key: { userId: targetUserId },
+    })
+  );
 
-  const p = profile.data;
-
-  // Generate presigned URLs based on match status
-  const getPresignedUrl = async (key: string | null | undefined) => {
-    if (!key) return null;
-    try {
-      const result = await getUrl({ path: key, options: { expiresIn: 3600 } });
-      return result.url.toString();
-    } catch {
-      return null;
-    }
-  };
-
-  const photo2Url = await getPresignedUrl(p.photo2Key);
-  const photo3Url = await getPresignedUrl(p.photo3Key);
-  const photo4Url = await getPresignedUrl(p.photo4Key);
-
-  // Progressive reveal: photo1 (face) and displayName only visible after match
-  const photo1Url = isMatched ? await getPresignedUrl(p.photo1Key) : null;
-  const displayName = isMatched ? p.displayName : null;
+  if (!profileResult.Item) throw new Error("Profile not found");
+  const p = profileResult.Item;
 
   return {
     userId: p.userId,
-    displayName,
-    photo1Url,
-    photo2Url,
-    photo3Url,
-    photo4Url,
+    displayName: isMatched ? p.displayName : null,
+    photo1Url: isMatched ? await presign(p.photo1Key) : null,
+    photo2Url: await presign(p.photo2Key),
+    photo3Url: await presign(p.photo3Key),
+    photo4Url: await presign(p.photo4Key),
     preferences: p.preferences ?? [],
     preferenceFreeText: p.preferenceFreeText ?? null,
     department: p.department ?? null,

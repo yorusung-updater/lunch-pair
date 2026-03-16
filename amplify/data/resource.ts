@@ -9,21 +9,25 @@ import {
 export const recordSwipeHandler = defineFunction({
   name: "record-swipe",
   entry: "./record-swipe/handler.ts",
+  resourceGroupName: "data",
 });
 
 export const getCandidatesHandler = defineFunction({
   name: "get-candidates",
   entry: "./get-candidates/handler.ts",
+  resourceGroupName: "data",
 });
 
 export const getProfileHandler = defineFunction({
   name: "get-profile",
   entry: "./get-profile/handler.ts",
+  resourceGroupName: "data",
 });
 
 export const getWhoLikedMeHandler = defineFunction({
   name: "get-who-liked-me",
   entry: "./get-who-liked-me/handler.ts",
+  resourceGroupName: "data",
 });
 
 // --- Schema definition ---
@@ -34,12 +38,12 @@ const schema = a.schema({
     .model({
       userId: a.id().required(),
       displayName: a.string().required(),
-      photo1Key: a.string().required(), // Face photo (revealed AFTER match)
-      photo2Key: a.string().required(), // Non-face photo (visible BEFORE match)
+      photo1Key: a.string().required(),
+      photo2Key: a.string().required(),
       photo3Key: a.string(),
       photo4Key: a.string(),
-      preferences: a.string().array(), // こだわり tags
-      preferenceFreeText: a.string(), // Free-form text
+      preferences: a.string().array(),
+      preferenceFreeText: a.string(),
       department: a.string(),
       isPremium: a.boolean().default("false"),
     })
@@ -48,10 +52,6 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.ownerDefinedIn("userId"),
       allow.authenticated().to(["read"]),
-      allow.resource(recordSwipeHandler).to(["read"]),
-      allow.resource(getCandidatesHandler).to(["read"]),
-      allow.resource(getProfileHandler).to(["read"]),
-      allow.resource(getWhoLikedMeHandler).to(["read"]),
     ]),
 
   Swipe: a
@@ -66,16 +66,13 @@ const schema = a.schema({
       index("targetId").sortKeys(["swiperId"]),
     ])
     .authorization((allow) => [
-      allow.authenticated().to(["read"]),
-      allow.resource(recordSwipeHandler),
-      allow.resource(getCandidatesHandler).to(["read"]),
-      allow.resource(getWhoLikedMeHandler).to(["read"]),
+      allow.authenticated(),
     ]),
 
   Match: a
     .model({
-      user1Id: a.id().required(), // Lexicographically smaller userId
-      user2Id: a.id().required(), // Lexicographically larger userId
+      user1Id: a.id().required(),
+      user2Id: a.id().required(),
       user1DisplayName: a.string(),
       user2DisplayName: a.string(),
     })
@@ -85,9 +82,7 @@ const schema = a.schema({
       index("user2Id"),
     ])
     .authorization((allow) => [
-      allow.authenticated().to(["read"]),
-      allow.resource(recordSwipeHandler),
-      allow.resource(getProfileHandler).to(["read"]),
+      allow.authenticated(),
     ]),
 
   // ========== Custom Types ==========
@@ -112,12 +107,12 @@ const schema = a.schema({
   }),
 
   CandidateConnection: a.customType({
-    profiles: a.string(), // JSON stringified ViewableProfile[]
+    profiles: a.string(),
     nextToken: a.string(),
   }),
 
   WhoLikedMeConnection: a.customType({
-    profiles: a.string(), // JSON stringified ViewableProfile[]
+    profiles: a.string(),
     count: a.integer(),
   }),
 
@@ -169,5 +164,8 @@ export const data = defineData({
   schema,
   authorizationModes: {
     defaultAuthorizationMode: "userPool",
+    apiKeyAuthorizationMode: {
+      expiresInDays: 30,
+    },
   },
 });

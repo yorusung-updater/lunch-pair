@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { generateClient } from "aws-amplify/data";
 import { uploadData, getUrl } from "aws-amplify/storage";
+import { fetchAuthSession } from "aws-amplify/auth";
 import imageCompression from "browser-image-compression";
 import type { Schema } from "@/types/schema";
 import { Button } from "@/components/ui/button";
@@ -113,7 +114,9 @@ export default function ProfilePage({
         maxWidthOrHeight: 1200,
         useWebWorker: true,
       });
-      const key = `photos/${userId}/${photoField.replace("Key", "")}.jpg`;
+      const session = await fetchAuthSession();
+      const identityId = session.identityId!;
+      const key = `photos/${identityId}/${photoField.replace("Key", "")}.jpg`;
       await uploadData({ path: key, data: compressed });
       await client.models.UserProfile.update({ userId, [photoField]: key });
       queryClient.invalidateQueries({ queryKey: ["myProfile"] });

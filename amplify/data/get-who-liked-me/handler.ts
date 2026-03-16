@@ -1,84 +1,102 @@
 import type { AppSyncResolverHandler } from "aws-lambda";
-import { Amplify } from "aws-amplify";
-import { generateClient } from "aws-amplify/api";
-import { getUrl } from "aws-amplify/storage";
-import { env } from "$amplify/env/get-who-liked-me";
-import type { Schema } from "../resource";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  QueryCommand,
+} from "@aws-sdk/lib-dynamodb";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-Amplify.configure(
-  {
-    API: {
-      GraphQL: {
-        endpoint: env.AMPLIFY_DATA_GRAPHQL_ENDPOINT,
-        region: env.AWS_REGION,
-        defaultAuthMode: "iam",
-      },
-    },
-    Storage: {
-      S3: {
-        bucket: env.AMPLIFY_STORAGE_BUCKET_NAME,
-        region: env.AWS_REGION,
-      },
-    },
-  },
-  { Auth: { credentialsProvider: { getCredentialsAndIdentityId: async () => ({ credentials: { accessKeyId: env.AWS_ACCESS_KEY_ID, secretAccessKey: env.AWS_SECRET_ACCESS_KEY, sessionToken: env.AWS_SESSION_TOKEN } }), clearCredentialsAndIdentityId: () => {} } } }
-);
+const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const s3 = new S3Client({});
+const USERPROFILE_TABLE = process.env.USERPROFILE_TABLE!;
+const SWIPE_TABLE = process.env.SWIPE_TABLE!;
+const STORAGE_BUCKET = process.env.STORAGE_BUCKET!;
 
-const client = generateClient<Schema>();
+type Args = { limit?: number };
 
-type Args = {
-  limit?: number;
+type Result = {
+  profiles: string;
+  count: number;
 };
 
-export const handler: AppSyncResolverHandler<Args, Schema["WhoLikedMeConnection"]["type"]> = async (event) => {
-  const userId = event.identity && "sub" in event.identity ? event.identity.sub : "";
+async function presign(key: string | undefined | null): Promise<string | null> {
+  if (!key) return null;
+  try {
+    return await getSignedUrl(
+      s3,
+      new GetObjectCommand({ Bucket: STORAGE_BUCKET, Key: key }),
+      { expiresIn: 3600 }
+    );
+  } catch {
+    return null;
+  }
+}
+
+export const handler: AppSyncResolverHandler<Args, Result> = async (event) => {
+  const userId =
+    event.identity && "sub" in event.identity ? event.identity.sub : "";
   const { limit = 20 } = event.arguments;
 
-  if (!userId) {
-    throw new Error("Unauthorized");
-  }
+  if (!userId) throw new Error("Unauthorized");
 
-  // 1. Check premium status
-  const myProfile = await client.models.UserProfile.get({ userId });
-  if (!myProfile.data?.isPremium) {
+  // 1. Check premium
+  const myProfile = await ddb.send(
+    new GetCommand({ TableName: USERPROFILE_TABLE, Key: { userId } })
+  );
+  if (!myProfile.Item?.isPremium) {
     return { profiles: JSON.stringify([]), count: 0 };
   }
 
   // 2. Get swipes targeting me with direction=OK
-  const likesResult = await client.models.Swipe.listSwipeByTargetId(
-    { targetId: userId },
-    { limit: limit * 2 } // over-fetch to allow filtering
+  const likesResult = await ddb.send(
+    new QueryCommand({
+      TableName: SWIPE_TABLE,
+      IndexName: "targetId-swiperId-index",
+      KeyConditionExpression: "targetId = :tid",
+      ExpressionAttributeValues: { ":tid": userId },
+    })
   );
 
-  const likers = likesResult.data.filter((s) => s.direction === "OK");
+  const likers = (likesResult.Items ?? []).filter(
+    (s) => s.direction === "OK"
+  );
 
-  // 3. Check which ones I have NOT swiped on yet
-  const mySwipes = await client.models.Swipe.listSwipeBySwiperId({ swiperId: userId });
-  const mySwipedTargets = new Set(mySwipes.data.map((s) => s.targetId));
+  // 3. Check which ones I have NOT swiped on
+  const mySwipes = await ddb.send(
+    new QueryCommand({
+      TableName: SWIPE_TABLE,
+      IndexName: "swiperId-targetId-index",
+      KeyConditionExpression: "swiperId = :sid",
+      ExpressionAttributeValues: { ":sid": userId },
+    })
+  );
+  const mySwipedTargets = new Set(
+    (mySwipes.Items ?? []).map((s) => s.targetId)
+  );
 
-  const unseenLikers = likers.filter((l) => !mySwipedTargets.has(l.swiperId));
+  const unseenLikers = likers.filter(
+    (l) => !mySwipedTargets.has(l.swiperId)
+  );
 
   // 4. Build ViewableProfiles (no face, no name)
   const profiles = await Promise.all(
     unseenLikers.slice(0, limit).map(async (liker) => {
-      const profile = await client.models.UserProfile.get({ userId: liker.swiperId });
-      if (!profile.data) return null;
-
-      const p = profile.data;
-      let photo2Url: string | null = null;
-
-      if (p.photo2Key) {
-        try {
-          const result = await getUrl({ path: p.photo2Key, options: { expiresIn: 3600 } });
-          photo2Url = result.url.toString();
-        } catch { /* skip */ }
-      }
+      const profile = await ddb.send(
+        new GetCommand({
+          TableName: USERPROFILE_TABLE,
+          Key: { userId: liker.swiperId },
+        })
+      );
+      if (!profile.Item) return null;
+      const p = profile.Item;
 
       return {
         userId: p.userId,
         displayName: null,
         photo1Url: null,
-        photo2Url,
+        photo2Url: await presign(p.photo2Key),
         photo3Url: null,
         photo4Url: null,
         preferences: p.preferences ?? [],
@@ -89,10 +107,8 @@ export const handler: AppSyncResolverHandler<Args, Schema["WhoLikedMeConnection"
     })
   );
 
-  const validProfiles = profiles.filter(Boolean);
-
   return {
-    profiles: JSON.stringify(validProfiles),
-    count: likers.length, // Total count of people who liked (even unseen)
+    profiles: JSON.stringify(profiles.filter(Boolean)),
+    count: likers.length,
   };
 };

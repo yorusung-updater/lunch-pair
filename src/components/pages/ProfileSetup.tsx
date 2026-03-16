@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { generateClient } from "aws-amplify/data";
 import { uploadData } from "aws-amplify/storage";
+import { fetchAuthSession } from "aws-amplify/auth";
 import imageCompression from "browser-image-compression";
 import type { Schema } from "@/types/schema";
 import { Button } from "@/components/ui/button";
@@ -58,13 +59,15 @@ export default function ProfileSetup({
     );
   }
 
-  async function compressAndUpload(file: File, path: string): Promise<string> {
+  async function compressAndUpload(file: File, filename: string): Promise<string> {
     const compressed = await imageCompression(file, {
       maxSizeMB: 1,
       maxWidthOrHeight: 1200,
       useWebWorker: true,
     });
-    const key = `photos/${userId}/${path}`;
+    const session = await fetchAuthSession();
+    const identityId = session.identityId!;
+    const key = `photos/${identityId}/${filename}`;
     await uploadData({ path: key, data: compressed });
     return key;
   }

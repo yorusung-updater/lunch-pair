@@ -1,20 +1,15 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/api-client";
 import { QUERY_KEYS } from "@/constants/query-keys";
 import { toast } from "sonner";
 import Loading from "../Loading";
+import { useAdminUsers } from "@/hooks/admin/useAdminUsers";
 
 export default function UsersPanel() {
   const queryClient = useQueryClient();
-  const { data: users, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.adminUsers,
-    queryFn: async () => {
-      const r: any = await client.models.UserProfile.list({ limit: 1000 });
-      return r?.data ?? [];
-    },
-  });
+  const { data: users, isLoading } = useAdminUsers();
 
   async function togglePackage(userId: string, field: "hasUnlimitedSwipe" | "hasLikesReveal", current: boolean) {
     try {

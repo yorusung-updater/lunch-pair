@@ -8,8 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-
-const STORAGE_KEY = "lunch-pair-tutorial-dismissed";
+import { STORAGE_KEY_TUTORIAL } from "@/constants/limits";
 
 export default function SwipeTutorial({
   onDone,
@@ -20,7 +19,7 @@ export default function SwipeTutorial({
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem(STORAGE_KEY);
+    const dismissed = localStorage.getItem(STORAGE_KEY_TUTORIAL);
     if (dismissed !== "true") {
       setOpen(true);
     } else {
@@ -30,7 +29,7 @@ export default function SwipeTutorial({
 
   function handleClose() {
     if (dontShowAgain) {
-      localStorage.setItem(STORAGE_KEY, "true");
+      localStorage.setItem(STORAGE_KEY_TUTORIAL, "true");
     }
     setOpen(false);
     onDone();

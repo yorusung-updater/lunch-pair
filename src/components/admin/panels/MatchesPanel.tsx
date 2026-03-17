@@ -1,21 +1,16 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/api-client";
 import { QUERY_KEYS } from "@/constants/query-keys";
 import { formatDate } from "@/utils/date";
 import { toast } from "sonner";
 import Loading from "../Loading";
+import { useAdminMatches } from "@/hooks/admin/useAdminMatches";
 
 export default function MatchesPanel() {
   const queryClient = useQueryClient();
-  const { data: matches, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.adminMatches,
-    queryFn: async () => {
-      const r: any = await client.models.Match.list({ limit: 1000 });
-      return r?.data ?? [];
-    },
-  });
+  const { data: matches, isLoading } = useAdminMatches();
 
   async function deleteMatch(user1Id: string, user2Id: string) {
     if (!confirm("このマッチを削除しますか？")) return;

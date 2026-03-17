@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/api-client";
 import { PREFERENCE_OPTIONS } from "@/constants/preferences";
-import { LUNCH_DAYS, LUNCH_TIMES, LUNCH_BUDGETS, LUNCH_AREAS } from "@/constants/lunch";
 import { QUERY_KEYS } from "@/constants/query-keys";
 import { toast } from "sonner";
+import LunchSettingsForm from "@/components/LunchSettingsForm";
 
 interface ProfileEditProps {
   userId: string;
@@ -130,52 +130,17 @@ export default function ProfileEdit({ userId, profile, onCancel, onSaved }: Prof
         {/* Lunch settings */}
         <div>
           <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">🍽️ ランチ設定</label>
-          <div className="mt-2 space-y-3 rounded-xl bg-white border border-gray-200 p-3">
-            <div>
-              <p className="text-[11px] text-gray-400 mb-1">曜日</p>
-              <div className="flex gap-1.5">
-                {LUNCH_DAYS.map((d) => (
-                  <button key={d} type="button"
-                    onClick={() => setSelectedLunchDays((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d])}
-                    className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-medium transition-all ${
-                      selectedLunchDays.includes(d) ? "bg-orange-500 text-white" : "bg-gray-50 text-gray-500"
-                    }`}>{d}</button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-[11px] text-gray-400 mb-1">時間</p>
-              <div className="flex flex-wrap gap-1.5">
-                {LUNCH_TIMES.map((t) => (
-                  <button key={t} type="button" onClick={() => setLunchTime(lunchTime === t ? "" : t)}
-                    className={`rounded-full px-2.5 py-1 text-xs transition-all ${
-                      lunchTime === t ? "bg-orange-500 text-white" : "bg-gray-50 text-gray-500"
-                    }`}>{t}</button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-[11px] text-gray-400 mb-1">予算</p>
-              <div className="flex flex-wrap gap-1.5">
-                {LUNCH_BUDGETS.map((b) => (
-                  <button key={b} type="button" onClick={() => setLunchBudget(lunchBudget === b ? "" : b)}
-                    className={`rounded-full px-2.5 py-1 text-xs transition-all ${
-                      lunchBudget === b ? "bg-orange-500 text-white" : "bg-gray-50 text-gray-500"
-                    }`}>{b}</button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-[11px] text-gray-400 mb-1">エリア</p>
-              <div className="flex flex-wrap gap-1.5">
-                {LUNCH_AREAS.map((a) => (
-                  <button key={a} type="button" onClick={() => setLunchArea(lunchArea === a ? "" : a)}
-                    className={`rounded-full px-2.5 py-1 text-xs transition-all ${
-                      lunchArea === a ? "bg-orange-500 text-white" : "bg-gray-50 text-gray-500"
-                    }`}>{a}</button>
-                ))}
-              </div>
-            </div>
+          <div className="mt-2 rounded-xl bg-white border border-gray-200 p-3">
+            <LunchSettingsForm
+              selectedDays={selectedLunchDays}
+              onDaysChange={setSelectedLunchDays}
+              selectedTime={lunchTime}
+              onTimeChange={setLunchTime}
+              selectedBudget={lunchBudget}
+              onBudgetChange={setLunchBudget}
+              selectedArea={lunchArea}
+              onAreaChange={setLunchArea}
+            />
           </div>
         </div>
 

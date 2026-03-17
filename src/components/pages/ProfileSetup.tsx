@@ -3,13 +3,12 @@
 import { useState } from "react";
 import { client } from "@/lib/api-client";
 import { compressAndUpload } from "@/utils/photo-upload";
-import { PREFERENCE_OPTIONS } from "@/constants/preferences";
-import { LUNCH_DAYS, LUNCH_TIMES, LUNCH_BUDGETS, LUNCH_AREAS } from "@/constants/lunch";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import LunchSettingsForm from "@/components/LunchSettingsForm";
+import PhotoUploadSection from "@/components/profile/PhotoUploadSection";
+import BasicInfoSection from "@/components/profile/BasicInfoSection";
+import PreferencesSection from "@/components/profile/PreferencesSection";
 
 export default function ProfileSetup({
   userId,
@@ -36,22 +35,19 @@ export default function ProfileSetup({
   const [lunchArea, setLunchArea] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function handleFileChange(
-    file: File | undefined,
-    setFile: (f: File | null) => void,
-    setPreview: (url: string | null) => void
-  ) {
-    if (!file) return;
+  const photoSetters: [(f: File | null) => void, (url: string | null) => void][] = [
+    [setPhoto1, setPhoto1Preview],
+    [setPhoto2, setPhoto2Preview],
+    [setPhoto3, setPhoto3Preview],
+    [setPhoto4, setPhoto4Preview],
+  ];
+
+  function handlePhotoChange(index: number, file: File) {
+    const [setFile, setPreview] = photoSetters[index];
     setFile(file);
     const reader = new FileReader();
     reader.onload = () => setPreview(reader.result as string);
     reader.readAsDataURL(file);
-  }
-
-  function togglePref(pref: string) {
-    setSelectedPrefs((prev) =>
-      prev.includes(pref) ? prev.filter((p) => p !== pref) : [...prev, pref]
-    );
   }
 
   async function handleSubmit() {
@@ -113,235 +109,42 @@ export default function ProfileSetup({
           </p>
         </div>
 
-        {/* Photos */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">写真（2枚必須・最大4枚）</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              {/* Photo 1 - Face (required) */}
-              <label className="relative flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-primary/50 bg-muted/50 hover:border-primary transition-colors">
-                {photo1Preview ? (
-                  <img src={photo1Preview} alt="顔写真" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="text-center p-2">
-                    <span className="text-2xl">📸</span>
-                    <p className="text-xs text-muted-foreground mt-1">顔写真（必須）</p>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleFileChange(e.target.files?.[0], setPhoto1, setPhoto1Preview)}
-                />
-              </label>
+        <PhotoUploadSection
+          photos={[photo1, photo2, photo3, photo4]}
+          photoPreviews={[photo1Preview, photo2Preview, photo3Preview, photo4Preview]}
+          onPhotoChange={handlePhotoChange}
+        />
 
-              {/* Photo 2 - Other (required) */}
-              <label className="relative flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-primary/50 bg-muted/50 hover:border-primary transition-colors">
-                {photo2Preview ? (
-                  <img src={photo2Preview} alt="その他" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="text-center p-2">
-                    <span className="text-2xl">🖼️</span>
-                    <p className="text-xs text-muted-foreground mt-1">その他（必須）</p>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleFileChange(e.target.files?.[0], setPhoto2, setPhoto2Preview)}
-                />
-              </label>
+        <BasicInfoSection
+          displayName={displayName}
+          department={department}
+          onNameChange={setDisplayName}
+          onDepartmentChange={setDepartment}
+        />
 
-              {/* Photo 3 - Optional */}
-              <label className="relative flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/30 hover:border-muted-foreground/50 transition-colors">
-                {photo3Preview ? (
-                  <img src={photo3Preview} alt="写真3" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="text-center p-2">
-                    <span className="text-xl text-muted-foreground">+</span>
-                    <p className="text-xs text-muted-foreground">任意</p>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleFileChange(e.target.files?.[0], setPhoto3, setPhoto3Preview)}
-                />
-              </label>
-
-              {/* Photo 4 - Optional */}
-              <label className="relative flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/30 hover:border-muted-foreground/50 transition-colors">
-                {photo4Preview ? (
-                  <img src={photo4Preview} alt="写真4" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="text-center p-2">
-                    <span className="text-xl text-muted-foreground">+</span>
-                    <p className="text-xs text-muted-foreground">任意</p>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleFileChange(e.target.files?.[0], setPhoto4, setPhoto4Preview)}
-                />
-              </label>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              ※マッチング前は「その他」の写真のみ表示されます。顔写真はマッチング後に公開されます。
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Name & Department */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">基本情報</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="name">名前</Label>
-              <Input
-                id="name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="表示名を入力"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="dept">部署（任意）</Label>
-              <Input
-                id="dept"
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                placeholder="例: エンジニアリング"
-                className="mt-1"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Preferences */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">こだわり</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {PREFERENCE_OPTIONS.map((pref) => (
-                <Badge
-                  key={pref}
-                  variant={selectedPrefs.includes(pref) ? "default" : "outline"}
-                  className="cursor-pointer select-none text-sm py-1.5 px-3"
-                  onClick={() => togglePref(pref)}
-                >
-                  {pref}
-                </Badge>
-              ))}
-            </div>
-            <div>
-              <Label htmlFor="freetext">自由記入（任意）</Label>
-              <Input
-                id="freetext"
-                value={preferenceFreeText}
-                onChange={(e) => setPreferenceFreeText(e.target.value)}
-                placeholder="例: 新しいお店を開拓したい！"
-                className="mt-1"
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <PreferencesSection
+          selectedPrefs={selectedPrefs}
+          onPrefsChange={setSelectedPrefs}
+          freeText={preferenceFreeText}
+          onFreeTextChange={setPreferenceFreeText}
+        />
 
         {/* Lunch Preferences */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">🍽️ ランチ設定</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>ランチ可能な曜日</Label>
-              <div className="flex gap-2 mt-2">
-                {LUNCH_DAYS.map((day) => (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => setSelectedLunchDays((prev) =>
-                      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
-                    )}
-                    className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all ${
-                      selectedLunchDays.includes(day)
-                        ? "bg-orange-500 text-white"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {day}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <Label>希望時間</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {LUNCH_TIMES.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setLunchTime(lunchTime === t ? "" : t)}
-                    className={`rounded-full px-3 py-1.5 text-sm transition-all ${
-                      lunchTime === t
-                        ? "bg-orange-500 text-white"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <Label>予算</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {LUNCH_BUDGETS.map((b) => (
-                  <button
-                    key={b}
-                    type="button"
-                    onClick={() => setLunchBudget(lunchBudget === b ? "" : b)}
-                    className={`rounded-full px-3 py-1.5 text-sm transition-all ${
-                      lunchBudget === b
-                        ? "bg-orange-500 text-white"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {b}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <Label>エリア</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {LUNCH_AREAS.map((a) => (
-                  <button
-                    key={a}
-                    type="button"
-                    onClick={() => setLunchArea(lunchArea === a ? "" : a)}
-                    className={`rounded-full px-3 py-1.5 text-sm transition-all ${
-                      lunchArea === a
-                        ? "bg-orange-500 text-white"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {a}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <CardContent>
+            <LunchSettingsForm
+              selectedDays={selectedLunchDays}
+              onDaysChange={setSelectedLunchDays}
+              selectedTime={lunchTime}
+              onTimeChange={setLunchTime}
+              selectedBudget={lunchBudget}
+              onBudgetChange={setLunchBudget}
+              selectedArea={lunchArea}
+              onAreaChange={setLunchArea}
+            />
           </CardContent>
         </Card>
 

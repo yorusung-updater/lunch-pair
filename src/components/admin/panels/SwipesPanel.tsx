@@ -1,30 +1,15 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { client } from "@/lib/api-client";
-import { QUERY_KEYS } from "@/constants/query-keys";
 import { formatDateTime } from "@/utils/date";
 import Loading from "../Loading";
+import { useAdminSwipes } from "@/hooks/admin/useAdminSwipes";
+import { useAdminUsers } from "@/hooks/admin/useAdminUsers";
 
 export default function SwipesPanel() {
-  const { data: swipes, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.adminSwipes,
-    queryFn: async () => {
-      const r: any = await client.models.Swipe.list({ limit: 1000 });
-      return (r?.data ?? []).sort((a: any, b: any) =>
-        (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
-      );
-    },
-  });
+  const { data: swipes, isLoading } = useAdminSwipes();
 
   // Build userId -> displayName map
-  const { data: users } = useQuery({
-    queryKey: QUERY_KEYS.adminUsers,
-    queryFn: async () => {
-      const r: any = await client.models.UserProfile.list({ limit: 1000 });
-      return r?.data ?? [];
-    },
-  });
+  const { data: users } = useAdminUsers();
 
   const nameMap: Record<string, string> = {};
   users?.forEach((u: any) => { nameMap[u.userId] = u.displayName; });

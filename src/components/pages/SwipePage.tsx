@@ -9,10 +9,9 @@ import SwipeDeck from "../SwipeDeck";
 import SwipeTutorial from "../SwipeTutorial";
 import { useUiStore } from "@/stores/ui-store";
 import { toast } from "sonner";
-import { LUNCH_DAYS, LUNCH_TIMES, LUNCH_BUDGETS, LUNCH_AREAS } from "@/constants/lunch";
 import { PREFERENCE_OPTIONS } from "@/constants/preferences";
-
-const FREE_DAILY_LIMIT = 3;
+import { FREE_DAILY_SWIPE_LIMIT } from "@/constants/limits";
+import LunchSettingsForm from "@/components/LunchSettingsForm";
 
 export default function SwipePage({ userId }: { userId: string }) {
   const [nextToken, setNextToken] = useState<string | null>(null);
@@ -53,7 +52,7 @@ export default function SwipePage({ userId }: { userId: string }) {
       const todayCount = (r?.data ?? []).filter(
         (s: any) => s.createdAt?.startsWith(today)
       ).length;
-      setDailyRemaining(Math.max(0, FREE_DAILY_LIMIT - todayCount));
+      setDailyRemaining(Math.max(0, FREE_DAILY_SWIPE_LIMIT - todayCount));
       return todayCount;
     },
     enabled: myProfile !== undefined,
@@ -155,7 +154,7 @@ export default function SwipePage({ userId }: { userId: string }) {
         <div>
           <h2 className="text-lg font-bold">本日のスワイプ上限に達しました</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            無料会員は1日{FREE_DAILY_LIMIT}回までスワイプできます
+            無料会員は1日{FREE_DAILY_SWIPE_LIMIT}回までスワイプできます
           </p>
         </div>
         <button
@@ -215,50 +214,17 @@ export default function SwipePage({ userId }: { userId: string }) {
               ))}
             </div>
           </div>
-          <div>
-            <p className="text-[10px] font-semibold text-gray-400 mb-1.5">曜日</p>
-            <div className="flex gap-1.5">
-              {LUNCH_DAYS.map((d) => (
-                <button key={d} onClick={() => setFilterDay(filterDay === d ? "" : d)}
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-all ${
-                    filterDay === d ? "bg-orange-500 text-white" : "bg-gray-50 text-gray-500"
-                  }`}>{d}</button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold text-gray-400 mb-1.5">時間</p>
-            <div className="flex flex-wrap gap-1.5">
-              {LUNCH_TIMES.map((t) => (
-                <button key={t} onClick={() => setFilterTime(filterTime === t ? "" : t)}
-                  className={`rounded-full px-2.5 py-1 text-xs transition-all ${
-                    filterTime === t ? "bg-orange-500 text-white" : "bg-gray-50 text-gray-500"
-                  }`}>{t}</button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold text-gray-400 mb-1.5">予算</p>
-            <div className="flex flex-wrap gap-1.5">
-              {LUNCH_BUDGETS.map((b) => (
-                <button key={b} onClick={() => setFilterBudget(filterBudget === b ? "" : b)}
-                  className={`rounded-full px-2.5 py-1 text-xs transition-all ${
-                    filterBudget === b ? "bg-orange-500 text-white" : "bg-gray-50 text-gray-500"
-                  }`}>{b}</button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold text-gray-400 mb-1.5">エリア</p>
-            <div className="flex flex-wrap gap-1.5">
-              {LUNCH_AREAS.map((a) => (
-                <button key={a} onClick={() => setFilterArea(filterArea === a ? "" : a)}
-                  className={`rounded-full px-2.5 py-1 text-xs transition-all ${
-                    filterArea === a ? "bg-orange-500 text-white" : "bg-gray-50 text-gray-500"
-                  }`}>{a}</button>
-              ))}
-            </div>
-          </div>
+          <LunchSettingsForm
+            mode="filter"
+            selectedDays={filterDay ? [filterDay] : []}
+            onDaysChange={(days) => setFilterDay(days[0] ?? "")}
+            selectedTime={filterTime}
+            onTimeChange={setFilterTime}
+            selectedBudget={filterBudget}
+            onBudgetChange={setFilterBudget}
+            selectedArea={filterArea}
+            onAreaChange={setFilterArea}
+          />
           {activeFilterCount > 0 && (
             <button
               onClick={() => { setFilterDay(""); setFilterTime(""); setFilterBudget(""); setFilterArea(""); setFilterPrefs([]); }}

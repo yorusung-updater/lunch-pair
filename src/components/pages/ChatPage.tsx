@@ -7,13 +7,7 @@ import { QUERY_KEYS } from "@/constants/query-keys";
 import { getChatId } from "@/utils/chat";
 import { formatTime, formatDateFull } from "@/utils/date";
 import type { ChatMessage } from "@/types";
-
-const SUGGESTIONS = [
-  "明日のランチどうですか？",
-  "12時に1階ロビーで待ち合わせは？",
-  "和食はいかがですか？",
-  "何か食べたいものありますか？",
-];
+import { SUGGESTIONS } from "@/constants/chat-suggestions";
 
 export default function ChatPage({
   userId,

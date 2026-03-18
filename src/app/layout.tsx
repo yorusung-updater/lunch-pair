@@ -9,7 +9,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Lunch Pair",
+  title: "一緒にランチ行きましょう",
   description: "社内マッチングアプリ",
   manifest: "/manifest.json",
   icons: {
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Lunch Pair",
+    title: "一緒にランチ行きましょう",
   },
 };
 

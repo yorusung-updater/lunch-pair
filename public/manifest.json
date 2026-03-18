@@ -1,6 +1,6 @@
 {
-  "name": "Lunch Pair",
-  "short_name": "LunchPair",
+  "name": "一緒にランチ行きましょう",
+  "short_name": "ランチ行こう",
   "description": "社内マッチングアプリ",
   "start_url": "/",
   "display": "standalone",

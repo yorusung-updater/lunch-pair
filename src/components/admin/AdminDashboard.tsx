@@ -3,14 +3,18 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
+import { lazy, Suspense } from "react";
 import StatsPanel from "./panels/StatsPanel";
 import UsersPanel from "./panels/UsersPanel";
 import MatchesPanel from "./panels/MatchesPanel";
 import SwipesPanel from "./panels/SwipesPanel";
 
+const SimulationPanel = lazy(() => import("./panels/SimulationPanel"));
+const AnalyticsPanel = lazy(() => import("./panels/AnalyticsPanel"));
+
 const queryClient = new QueryClient();
 
-type Tab = "users" | "matches" | "swipes" | "stats";
+type Tab = "users" | "matches" | "swipes" | "stats" | "simulation" | "analytics";
 
 export default function AdminDashboard() {
   return (
@@ -29,6 +33,8 @@ function AdminContent() {
     { id: "users", label: "ユーザー" },
     { id: "matches", label: "マッチ" },
     { id: "swipes", label: "スワイプ" },
+    { id: "simulation", label: "シミュレーション" },
+    { id: "analytics", label: "分析" },
   ];
 
   return (
@@ -42,7 +48,7 @@ function AdminContent() {
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
             </div>
-            <h1 className="font-bold text-gray-900">Lunch Pair 管理画面</h1>
+            <h1 className="font-bold text-gray-900">一緒にランチ行きましょう 管理画面</h1>
           </div>
           <button
             onClick={() => {
@@ -55,12 +61,12 @@ function AdminContent() {
           </button>
         </div>
         {/* Tabs */}
-        <div className="max-w-4xl mx-auto px-4 flex gap-0.5">
+        <div className="max-w-4xl mx-auto px-4 flex gap-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              className={`shrink-0 px-3 py-2 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                 tab === t.id
                   ? "border-gray-900 text-gray-900"
                   : "border-transparent text-gray-400 hover:text-gray-600"
@@ -77,6 +83,16 @@ function AdminContent() {
         {tab === "users" && <UsersPanel />}
         {tab === "matches" && <MatchesPanel />}
         {tab === "swipes" && <SwipesPanel />}
+        {tab === "simulation" && (
+          <Suspense fallback={<div className="text-center py-8 text-gray-400">読み込み中...</div>}>
+            <SimulationPanel />
+          </Suspense>
+        )}
+        {tab === "analytics" && (
+          <Suspense fallback={<div className="text-center py-8 text-gray-400">読み込み中...</div>}>
+            <AnalyticsPanel />
+          </Suspense>
+        )}
       </div>
     </div>
   );

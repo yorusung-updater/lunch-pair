@@ -7,4 +7,6 @@ export const QUERY_KEYS = {
   adminUsers: ["admin-users"] as const,
   adminMatches: ["admin-matches"] as const,
   adminSwipes: ["admin-swipes"] as const,
+  adminSimulation: ["admin-simulation"] as const,
+  adminAnalytics: ["admin-analytics"] as const,
 };

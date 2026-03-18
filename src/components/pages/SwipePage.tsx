@@ -174,7 +174,7 @@ export default function SwipePage({ userId }: { userId: string }) {
     <div className="relative h-full">
       <SwipeTutorial onDone={() => setTutorialDone(true)} />
       <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Lunch Pair</h1>
+        <h1 className="text-base font-bold">一緒にランチ行きましょう</h1>
         <div className="flex items-center gap-2">
           {dailyRemaining !== null && (
             <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-600">

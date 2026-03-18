@@ -6,6 +6,7 @@ import { client } from "@/lib/api-client";
 import { PREFERENCE_OPTIONS } from "@/constants/preferences";
 import { QUERY_KEYS } from "@/constants/query-keys";
 import { toast } from "sonner";
+import { DIVISIONS } from "@/constants/divisions";
 import LunchSettingsForm from "@/components/LunchSettingsForm";
 
 interface ProfileEditProps {
@@ -13,6 +14,7 @@ interface ProfileEditProps {
   profile: {
     displayName: string;
     department: string | null;
+    excludeSameDivision: boolean | null;
     preferenceFreeText: string | null;
     preferences: string[] | null;
     lunchDays: string[] | null;
@@ -29,6 +31,7 @@ export default function ProfileEdit({ userId, profile, onCancel, onSaved }: Prof
   const [saving, setSaving] = useState(false);
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [department, setDepartment] = useState(profile.department ?? "");
+  const [excludeSameDivision, setExcludeSameDivision] = useState(profile.excludeSameDivision ?? false);
   const [preferenceFreeText, setPreferenceFreeText] = useState(profile.preferenceFreeText ?? "");
   const [selectedPrefs, setSelectedPrefs] = useState<string[]>(
     (profile.preferences ?? []).filter((p: string) => !!p)
@@ -53,6 +56,7 @@ export default function ProfileEdit({ userId, profile, onCancel, onSaved }: Prof
         userId,
         displayName,
         department: department || undefined,
+        excludeSameDivision,
         preferenceFreeText: preferenceFreeText || undefined,
         preferences: selectedPrefs,
         lunchDays: selectedLunchDays.length > 0 ? selectedLunchDays : undefined,
@@ -98,14 +102,32 @@ export default function ProfileEdit({ userId, profile, onCancel, onSaved }: Prof
 
         {/* Department */}
         <div>
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">部署</label>
-          <input
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">所属本部</label>
+          <select
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
-            placeholder="例: エンジニアリング"
             className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-100"
-          />
+          >
+            <option value="">選択してください</option>
+            {DIVISIONS.map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
         </div>
+        {department && (
+          <label className="flex items-center gap-3 cursor-pointer rounded-lg bg-gray-50 px-3 py-2.5">
+            <input
+              type="checkbox"
+              checked={excludeSameDivision}
+              onChange={(e) => setExcludeSameDivision(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-400"
+            />
+            <div>
+              <p className="text-sm font-medium text-gray-700">同じ本部のメンバーを除外する</p>
+              <p className="text-xs text-gray-400">異なる本部の人とだけマッチングします</p>
+            </div>
+          </label>
+        )}
 
         {/* Preferences */}
         <div>

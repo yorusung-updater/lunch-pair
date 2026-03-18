@@ -49,6 +49,7 @@ const schema = a.schema({
       lunchTime: a.string(),              // "12:00" etc.
       lunchBudget: a.string(),            // "~1000円" etc.
       lunchArea: a.string(),              // "本社周辺" etc.
+      excludeSameDivision: a.boolean().default("false"),
       hasUnlimitedSwipe: a.boolean().default("false"),
       hasLikesReveal: a.boolean().default("false"),
     })
@@ -56,7 +57,7 @@ const schema = a.schema({
     .secondaryIndexes((index) => [index("department")])
     .authorization((allow) => [
       allow.ownerDefinedIn("userId"),
-      allow.authenticated().to(["read"]),
+      allow.authenticated().to(["read", "create", "update", "delete"]),
     ]),
 
   Swipe: a

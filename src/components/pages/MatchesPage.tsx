@@ -3,16 +3,10 @@
 import { useState } from "react";
 import { client } from "@/lib/api-client";
 import { useMatches } from "@/hooks/use-matches";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import type { ViewableProfile, MatchEntry } from "@/types";
 import { formatDate } from "@/utils/date";
 import ChatPage from "./ChatPage";
+import ProfileDetailPage from "@/components/ProfileDetailPage";
 
 export default function MatchesPage({ userId }: { userId: string }) {
   const [selectedMatch, setSelectedMatch] = useState<ViewableProfile | null>(null);
@@ -36,12 +30,39 @@ export default function MatchesPage({ userId }: { userId: string }) {
     }
   }
 
+  // Full-page profile view
+  if (selectedMatch) {
+    return (
+      <ProfileDetailPage
+        profile={selectedMatch}
+        onBack={() => setSelectedMatch(null)}
+        onChat={() => {
+          const match = matches?.find((m) => m.matchedUserId === selectedMatch.userId);
+          if (match) {
+            setSelectedMatch(null);
+            setChatTarget(match);
+          }
+        }}
+      />
+    );
+  }
+
+  // Loading profile spinner (full page)
+  if (loadingProfile) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
+      </div>
+    );
+  }
+
   if (chatTarget) {
     return (
       <ChatPage
         userId={userId}
         matchedUserId={chatTarget.matchedUserId}
         matchedUserName={chatTarget.displayName}
+        matchedUserPhoto={chatTarget.photoUrl}
         onBack={() => setChatTarget(null)}
       />
     );
@@ -110,41 +131,6 @@ export default function MatchesPage({ userId }: { userId: string }) {
           ))}
         </div>
       )}
-
-      <Dialog open={!!selectedMatch} onOpenChange={() => setSelectedMatch(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{selectedMatch?.displayName ?? "プロフィール"}</DialogTitle>
-          </DialogHeader>
-          {loadingProfile ? (
-            <div className="flex justify-center py-8">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            </div>
-          ) : selectedMatch ? (
-            <div className="space-y-4">
-              {selectedMatch.photo1Url && (
-                <img src={selectedMatch.photo1Url} alt="顔写真" className="w-full rounded-lg object-cover aspect-square" />
-              )}
-              {selectedMatch.photo2Url && (
-                <img src={selectedMatch.photo2Url} alt="写真" className="w-full rounded-lg object-cover aspect-[4/3]" />
-              )}
-              {selectedMatch.department && (
-                <p className="text-sm text-muted-foreground">{selectedMatch.department}</p>
-              )}
-              {selectedMatch.preferences && selectedMatch.preferences.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedMatch.preferences.map((p: string) => (
-                    <Badge key={p} variant="secondary">{p}</Badge>
-                  ))}
-                </div>
-              )}
-              {selectedMatch.preferenceFreeText && (
-                <p className="text-sm">{selectedMatch.preferenceFreeText}</p>
-              )}
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

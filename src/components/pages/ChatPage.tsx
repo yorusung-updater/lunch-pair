@@ -6,26 +6,53 @@ import { client } from "@/lib/api-client";
 import { QUERY_KEYS } from "@/constants/query-keys";
 import { getChatId } from "@/utils/chat";
 import { formatTime, formatDateFull } from "@/utils/date";
-import type { ChatMessage } from "@/types";
+import type { ChatMessage, ViewableProfile } from "@/types";
 import { SUGGESTIONS } from "@/constants/chat-suggestions";
+import ProfileDetailPage from "@/components/ProfileDetailPage";
 
 export default function ChatPage({
   userId,
   matchedUserId,
   matchedUserName,
+  matchedUserPhoto,
   onBack,
 }: {
   userId: string;
   matchedUserId: string;
   matchedUserName: string;
+  matchedUserPhoto?: string | null;
   onBack: () => void;
 }) {
   const chatId = getChatId(userId, matchedUserId);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [profileData, setProfileData] = useState<ViewableProfile | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  async function openProfile() {
+    if (profileData) {
+      setShowProfile(true);
+      return;
+    }
+    setLoadingProfile(true);
+    try {
+      const result: any = await client.queries.getProfileForViewing({
+        targetUserId: matchedUserId,
+      });
+      if (result?.data) {
+        setProfileData(result.data as ViewableProfile);
+        setShowProfile(true);
+      }
+    } catch (err) {
+      console.error("Failed to load profile:", err);
+    } finally {
+      setLoadingProfile(false);
+    }
+  }
 
   const { data: messages } = useQuery({
     queryKey: QUERY_KEYS.chat(chatId),
@@ -86,6 +113,25 @@ export default function ChatPage({
     sendMessage(newMessage);
   }, [newMessage, sendMessage]);
 
+  // Full-page profile view
+  if (showProfile && profileData) {
+    return (
+      <ProfileDetailPage
+        profile={profileData}
+        onBack={() => setShowProfile(false)}
+      />
+    );
+  }
+
+  // Loading profile
+  if (loadingProfile) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-gradient-to-b from-orange-50 to-background">
       {/* Header */}
@@ -98,12 +144,22 @@ export default function ChatPage({
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <div className="flex items-center gap-3 flex-1">
+        <button
+          onClick={openProfile}
+          className="flex items-center gap-3 flex-1 text-left active:opacity-70 transition-opacity"
+        >
+          {matchedUserPhoto ? (
+            <img src={matchedUserPhoto} alt="" className="h-8 w-8 rounded-full object-cover border border-orange-200 shrink-0" />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-orange-600 shrink-0">
+              {matchedUserName.charAt(0)}
+            </div>
+          )}
           <div>
             <p className="font-semibold text-sm leading-tight">{matchedUserName}</p>
-            <p className="text-[11px] text-orange-500">ランチの予定を決めましょう 🍽️</p>
+            <p className="text-[11px] text-orange-500">プロフィールを見る &gt;</p>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Messages */}

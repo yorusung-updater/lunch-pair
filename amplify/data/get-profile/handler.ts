@@ -22,6 +22,10 @@ type ViewableProfile = {
   preferences: string[];
   preferenceFreeText: string | null;
   department: string | null;
+  lunchDays: string[] | null;
+  lunchTime: string | null;
+  lunchBudget: string | null;
+  lunchArea: string | null;
   isMatched: boolean;
 };
 
@@ -78,6 +82,10 @@ export const handler: AppSyncResolverHandler<Args, ViewableProfile> = async (
     preferences: p.preferences ?? [],
     preferenceFreeText: p.preferenceFreeText ?? null,
     department: p.department ?? null,
+    lunchDays: isMatched ? (p.lunchDays ?? null) : null,
+    lunchTime: isMatched ? (p.lunchTime ?? null) : null,
+    lunchBudget: isMatched ? (p.lunchBudget ?? null) : null,
+    lunchArea: isMatched ? (p.lunchArea ?? null) : null,
     isMatched,
   };
 };

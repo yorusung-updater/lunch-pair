@@ -6,6 +6,7 @@ interface ProfileViewProps {
   profile: {
     displayName: string;
     department: string | null;
+    excludeSameDivision: boolean | null;
     preferenceFreeText: string | null;
     preferences: string[] | null;
     hasUnlimitedSwipe: boolean;
@@ -14,6 +15,10 @@ interface ProfileViewProps {
     photo2Url: string | null;
     photo3Url: string | null;
     photo4Url: string | null;
+    lunchDays?: string[] | null;
+    lunchTime?: string | null;
+    lunchBudget?: string | null;
+    lunchArea?: string | null;
   };
   onEdit: () => void;
   onPhotoUpdate: (photoField: "photo1Key" | "photo2Key" | "photo3Key" | "photo4Key", file: File) => void;
@@ -41,6 +46,9 @@ export default function ProfileView({ profile, onEdit, onPhotoUpdate, signOut }:
                 <path d="M20 7h-4V3H8v4H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
               </svg>
               <span className="text-sm opacity-90">{profile.department}</span>
+              {profile.excludeSameDivision && (
+                <span className="ml-1.5 rounded-full bg-white/20 px-2 py-0.5 text-[10px]">他本部のみ</span>
+              )}
             </div>
           )}
         </div>
@@ -99,6 +107,41 @@ export default function ProfileView({ profile, onEdit, onPhotoUpdate, signOut }:
                 )
               )}
             </div>
+          </div>
+        )}
+
+        {/* Lunch settings */}
+        {(profile.lunchDays?.length || profile.lunchTime || profile.lunchBudget || profile.lunchArea) && (
+          <div className="rounded-2xl bg-white p-4 shadow-sm space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700">ランチ設定</h3>
+            {profile.lunchDays && profile.lunchDays.length > 0 && (
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-400 w-12 shrink-0">曜日</span>
+                <div className="flex gap-1.5">
+                  {profile.lunchDays.map((d: string) => (
+                    <span key={d} className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-orange-100 text-xs font-medium text-orange-700">{d}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {profile.lunchTime && (
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-400 w-12 shrink-0">時間</span>
+                <span className="text-sm text-gray-700">{profile.lunchTime}</span>
+              </div>
+            )}
+            {profile.lunchBudget && (
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-400 w-12 shrink-0">予算</span>
+                <span className="text-sm text-gray-700">{profile.lunchBudget}</span>
+              </div>
+            )}
+            {profile.lunchArea && (
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-400 w-12 shrink-0">エリア</span>
+                <span className="text-sm text-gray-700">{profile.lunchArea}</span>
+              </div>
+            )}
           </div>
         )}
 

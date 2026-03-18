@@ -14,8 +14,8 @@ interface PhotoGridProps {
 }
 
 const PHOTO_FIELDS: { urlField: PhotoUrlField; keyField: PhotoField; label: string }[] = [
-  { urlField: "photo1Url", keyField: "photo1Key", label: "メイン" },
-  { urlField: "photo2Url", keyField: "photo2Key", label: "サブ" },
+  { urlField: "photo1Url", keyField: "photo1Key", label: "雰囲気" },
+  { urlField: "photo2Url", keyField: "photo2Key", label: "顔写真" },
   { urlField: "photo3Url", keyField: "photo3Key", label: "" },
   { urlField: "photo4Url", keyField: "photo4Key", label: "" },
 ];

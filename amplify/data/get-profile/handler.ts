@@ -26,6 +26,9 @@ type ViewableProfile = {
   lunchTime: string | null;
   lunchBudget: string | null;
   lunchArea: string | null;
+  ethicalTags: string[] | null;
+  ethicalScale: string | null;
+  ethicalMatchingStance: string | null;
   isMatched: boolean;
 };
 
@@ -86,6 +89,9 @@ export const handler: AppSyncResolverHandler<Args, ViewableProfile> = async (
     lunchTime: isMatched ? (p.lunchTime ?? null) : null,
     lunchBudget: isMatched ? (p.lunchBudget ?? null) : null,
     lunchArea: isMatched ? (p.lunchArea ?? null) : null,
+    ethicalTags: isMatched ? (p.ethicalTags ?? null) : null,
+    ethicalScale: isMatched ? (p.ethicalScale ?? null) : null,
+    ethicalMatchingStance: isMatched ? (p.ethicalMatchingStance ?? null) : null,
     isMatched,
   };
 };

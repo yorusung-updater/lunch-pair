@@ -12,6 +12,7 @@ const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const s3 = new S3Client({});
 const USERPROFILE_TABLE = process.env.USERPROFILE_TABLE!;
 const SWIPE_TABLE = process.env.SWIPE_TABLE!;
+const MATCH_TABLE = process.env.MATCH_TABLE!;
 const STORAGE_BUCKET = process.env.STORAGE_BUCKET!;
 
 type Args = { limit?: number };
@@ -37,34 +38,12 @@ async function presign(key: string | undefined | null): Promise<string | null> {
 export const handler: AppSyncResolverHandler<Args, Result> = async (event) => {
   const userId =
     event.identity && "sub" in event.identity ? event.identity.sub : "";
-  const { limit = 20 } = event.arguments;
+  const { limit = 50 } = event.arguments;
 
   if (!userId) throw new Error("Unauthorized");
 
-  // 1. Check premium
-  const myProfile = await ddb.send(
-    new GetCommand({ TableName: USERPROFILE_TABLE, Key: { userId } })
-  );
-  if (!myProfile.Item?.hasLikesReveal) {
-    return { profiles: JSON.stringify([]), count: 0 };
-  }
-
-  // 2. Get swipes targeting me with direction=OK
-  const likesResult = await ddb.send(
-    new QueryCommand({
-      TableName: SWIPE_TABLE,
-      IndexName: "swipesByTargetIdAndSwiperId",
-      KeyConditionExpression: "targetId = :tid",
-      ExpressionAttributeValues: { ":tid": userId },
-    })
-  );
-
-  const likers = (likesResult.Items ?? []).filter(
-    (s) => s.direction === "OK"
-  );
-
-  // 3. Check which ones I have NOT swiped on
-  const mySwipes = await ddb.send(
+  // 1. Get all my OK swipes
+  const swipesResult = await ddb.send(
     new QueryCommand({
       TableName: SWIPE_TABLE,
       IndexName: "swipesBySwiperIdAndTargetId",
@@ -72,46 +51,62 @@ export const handler: AppSyncResolverHandler<Args, Result> = async (event) => {
       ExpressionAttributeValues: { ":sid": userId },
     })
   );
-  const mySwipedTargets = new Set(
-    (mySwipes.Items ?? []).map((s) => s.targetId)
+
+  const okSwipes = (swipesResult.Items ?? []).filter(
+    (s) => s.direction === "OK"
   );
 
-  const unseenLikers = likers.filter(
-    (l) => !mySwipedTargets.has(l.swiperId)
-  );
-
-  // 4. Build ViewableProfiles (no face, no name)
+  // 2. For each target, get profile and check match status
   const profiles = await Promise.all(
-    unseenLikers.slice(0, limit).map(async (liker) => {
-      const profile = await ddb.send(
+    okSwipes.slice(0, limit).map(async (swipe) => {
+      const targetId = swipe.targetId;
+
+      // Get target profile
+      const profileResult = await ddb.send(
         new GetCommand({
           TableName: USERPROFILE_TABLE,
-          Key: { userId: liker.swiperId },
+          Key: { userId: targetId },
         })
       );
-      if (!profile.Item) return null;
-      const p = profile.Item;
+      if (!profileResult.Item) return null;
+      const p = profileResult.Item;
+
+      // Check match status
+      const [id1, id2] = [userId, targetId].sort();
+      const matchResult = await ddb.send(
+        new GetCommand({
+          TableName: MATCH_TABLE,
+          Key: { user1Id: id1, user2Id: id2 },
+        })
+      );
+      const isMatched = !!matchResult.Item;
 
       return {
         userId: p.userId,
-        displayName: null,
-        photo1Url: null,
+        displayName: isMatched ? p.displayName : null,
+        photo1Url: isMatched ? await presign(p.photo1Key) : null,
         photo2Url: await presign(p.photo2Key),
         photo3Url: null,
         photo4Url: null,
         preferences: p.preferences ?? [],
-        preferenceFreeText: p.preferenceFreeText ?? null,
+        preferenceFreeText: null,
         department: p.department ?? null,
+        lunchDays: null,
+        lunchTime: null,
+        lunchBudget: null,
+        lunchArea: null,
         ethicalTags: null,
         ethicalScale: null,
         ethicalMatchingStance: null,
-        isMatched: false,
+        isMatched,
       };
     })
   );
 
+  const valid = profiles.filter(Boolean);
+
   return {
-    profiles: JSON.stringify(profiles.filter(Boolean)),
-    count: unseenLikers.length,
+    profiles: JSON.stringify(valid),
+    count: valid.length,
   };
 };

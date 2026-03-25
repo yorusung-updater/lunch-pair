@@ -50,9 +50,6 @@ export const handler: AppSyncResolverHandler<Args, Result> = async (event) => {
     new GetCommand({ TableName: USERPROFILE_TABLE, Key: { userId } })
   );
   const myPrefs: string[] = callerProfile.Item?.preferences ?? [];
-  const myDepartment: string | undefined = callerProfile.Item?.department;
-  const excludeSameDivision: boolean = callerProfile.Item?.excludeSameDivision === true;
-
   // 1. Get all user IDs I've already swiped on
   const swipedIds = new Set<string>();
   let lastKey: Record<string, any> | undefined;
@@ -83,11 +80,6 @@ export const handler: AppSyncResolverHandler<Args, Result> = async (event) => {
   let candidates = (profiles.Items ?? []).filter(
     (p) => !swipedIds.has(p.userId)
   );
-
-  // Exclude same division if user opted in
-  if (excludeSameDivision && myDepartment) {
-    candidates = candidates.filter((p) => p.department !== myDepartment);
-  }
 
   if (department) {
     candidates = candidates.filter((p) => p.department === department);
@@ -141,6 +133,9 @@ export const handler: AppSyncResolverHandler<Args, Result> = async (event) => {
         lunchTime: p.lunchTime ?? null,
         lunchBudget: p.lunchBudget ?? null,
         lunchArea: p.lunchArea ?? null,
+        ethicalTags: null,
+        ethicalScale: null,
+        ethicalMatchingStance: null,
         matchingPrefsCount: matchCount,
         isMatched: false,
       };

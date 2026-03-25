@@ -30,6 +30,18 @@ export const getWhoLikedMeHandler = defineFunction({
   resourceGroupName: "data",
 });
 
+export const getMyLikesHandler = defineFunction({
+  name: "get-my-likes",
+  entry: "./get-my-likes/handler.ts",
+  resourceGroupName: "data",
+});
+
+export const getUnreadCountsHandler = defineFunction({
+  name: "get-unread-counts",
+  entry: "./get-unread-counts/handler.ts",
+  resourceGroupName: "data",
+});
+
 // --- Schema definition ---
 const schema = a.schema({
   // ========== Models ==========
@@ -49,9 +61,11 @@ const schema = a.schema({
       lunchTime: a.string(),              // "12:00" etc.
       lunchBudget: a.string(),            // "~1000円" etc.
       lunchArea: a.string(),              // "本社周辺" etc.
-      excludeSameDivision: a.boolean().default("false"),
       hasUnlimitedSwipe: a.boolean().default("false"),
       hasLikesReveal: a.boolean().default("false"),
+      ethicalTags: a.string().array(),
+      ethicalScale: a.string(),
+      ethicalMatchingStance: a.string(),
     })
     .identifier(["userId"])
     .secondaryIndexes((index) => [index("department")])
@@ -106,6 +120,46 @@ const schema = a.schema({
       allow.authenticated(),
     ]),
 
+  Report: a
+    .model({
+      reporterId: a.id().required(),
+      reporterName: a.string(),
+      targetId: a.id().required(),
+      targetName: a.string(),
+      reason: a.string().required(),
+      detail: a.string(),
+      status: a.enum(["OPEN", "REVIEWED", "ACTIONED"]),
+    })
+    .secondaryIndexes((index) => [index("status"), index("targetId")])
+    .authorization((allow) => [
+      allow.authenticated(),
+    ]),
+
+  Inquiry: a
+    .model({
+      userId: a.id().required(),
+      displayName: a.string(),
+      category: a.string(),
+      message: a.string().required(),
+      status: a.enum(["OPEN", "CLOSED"]),
+    })
+    .secondaryIndexes((index) => [index("status")])
+    .authorization((allow) => [
+      allow.authenticated(),
+    ]),
+
+  ChatReadStatus: a
+    .model({
+      chatId: a.string().required(),
+      userId: a.id().required(),
+      lastReadAt: a.datetime().required(),
+    })
+    .identifier(["chatId", "userId"])
+    .secondaryIndexes((index) => [index("userId")])
+    .authorization((allow) => [
+      allow.authenticated(),
+    ]),
+
   // ========== Custom Types ==========
 
   RecordSwipeResponse: a.customType({
@@ -129,6 +183,9 @@ const schema = a.schema({
     lunchTime: a.string(),
     lunchBudget: a.string(),
     lunchArea: a.string(),
+    ethicalTags: a.string().array(),
+    ethicalScale: a.string(),
+    ethicalMatchingStance: a.string(),
     isMatched: a.boolean(),
   }),
 
@@ -140,6 +197,11 @@ const schema = a.schema({
   WhoLikedMeConnection: a.customType({
     profiles: a.string(),
     count: a.integer(),
+  }),
+
+  UnreadCountsResult: a.customType({
+    counts: a.string(),
+    total: a.integer(),
   }),
 
   // ========== Custom Operations ==========
@@ -186,6 +248,22 @@ const schema = a.schema({
     .returns(a.ref("WhoLikedMeConnection"))
     .authorization((allow) => [allow.authenticated()])
     .handler(a.handler.function(getWhoLikedMeHandler)),
+
+  getMyLikes: a
+    .query()
+    .arguments({
+      limit: a.integer(),
+    })
+    .returns(a.ref("WhoLikedMeConnection"))
+    .authorization((allow) => [allow.authenticated()])
+    .handler(a.handler.function(getMyLikesHandler)),
+
+  getUnreadCounts: a
+    .query()
+    .arguments({})
+    .returns(a.ref("UnreadCountsResult"))
+    .authorization((allow) => [allow.authenticated()])
+    .handler(a.handler.function(getUnreadCountsHandler)),
 });
 
 export type Schema = ClientSchema<typeof schema>;

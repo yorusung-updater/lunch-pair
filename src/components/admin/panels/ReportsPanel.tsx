@@ -27,14 +27,19 @@ export default function ReportsPanel() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"ALL" | "OPEN" | "REVIEWED" | "ACTIONED">("ALL");
 
-  const { data: reports, isLoading } = useQuery({
+  const { data: reports, isLoading, error } = useQuery({
     queryKey: ["admin-reports"],
     queryFn: async () => {
-      const result: any = await client.models.Report.list({ limit: 200 });
-      const items = (result?.data ?? []) as Report[];
-      return items.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      try {
+        const result: any = await client.models.Report?.list?.({ limit: 200 });
+        const items = (result?.data ?? []) as Report[];
+        return items.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      } catch (err) {
+        console.error("Error loading reports:", err);
+        throw err;
+      }
     },
   });
 
@@ -46,6 +51,15 @@ export default function ReportsPanel() {
     } catch {
       toast.error("更新に失敗しました");
     }
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl bg-red-50 p-6 text-center">
+        <p className="text-sm text-red-600">データの読み込みに失敗しました</p>
+        <p className="text-xs text-red-400 mt-1">{error instanceof Error ? error.message : "Unknown error"}</p>
+      </div>
+    );
   }
 
   if (isLoading) {

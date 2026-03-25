@@ -4,6 +4,7 @@ import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { lazy, Suspense } from "react";
+import React from "react";
 import StatsPanel from "./panels/StatsPanel";
 import UsersPanel from "./panels/UsersPanel";
 import MatchesPanel from "./panels/MatchesPanel";
@@ -14,16 +15,57 @@ import ReportsPanel from "./panels/ReportsPanel";
 const SimulationPanel = lazy(() => import("./panels/SimulationPanel"));
 const AnalyticsPanel = lazy(() => import("./panels/AnalyticsPanel"));
 
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error("AdminDashboard error:", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-gray-50 p-4">
+          <div className="rounded-xl bg-red-50 p-6">
+            <h2 className="font-bold text-red-700 mb-2">エラーが発生しました</h2>
+            <p className="text-sm text-red-600">{this.state.error?.message || "Unknown error"}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium"
+            >
+              ページを再読み込み
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 const queryClient = new QueryClient();
 
 type Tab = "users" | "matches" | "swipes" | "stats" | "simulation" | "analytics" | "inquiries" | "reports";
 
 export default function AdminDashboard() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AdminContent />
-      <Toaster position="top-center" />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AdminContent />
+        <Toaster position="top-center" />
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

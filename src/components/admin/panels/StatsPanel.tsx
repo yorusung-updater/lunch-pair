@@ -4,29 +4,67 @@ import { useQuery } from "@tanstack/react-query";
 import { client } from "@/lib/api-client";
 import { QUERY_KEYS } from "@/constants/query-keys";
 import { formatDate } from "@/utils/date";
+import { useEffect, useState } from "react";
 
-export default function StatsPanel() {
-  const { data: users } = useQuery({
+function StatsPanelContent() {
+  const { data: users, error: usersError, isLoading: usersLoading } = useQuery({
     queryKey: QUERY_KEYS.adminUsers,
     queryFn: async () => {
-      const r: any = await client.models.UserProfile.list({ limit: 1000 });
-      return r?.data ?? [];
+      try {
+        const r: any = await client.models.UserProfile?.list?.({ limit: 1000 });
+        return r?.data ?? [];
+      } catch (err) {
+        console.error("Error loading users:", err);
+        throw err;
+      }
     },
+    retry: 1,
   });
-  const { data: matches } = useQuery({
+  const { data: matches, error: matchesError, isLoading: matchesLoading } = useQuery({
     queryKey: QUERY_KEYS.adminMatches,
     queryFn: async () => {
-      const r: any = await client.models.Match.list({ limit: 1000 });
-      return r?.data ?? [];
+      try {
+        const r: any = await client.models.Match?.list?.({ limit: 1000 });
+        return r?.data ?? [];
+      } catch (err) {
+        console.error("Error loading matches:", err);
+        throw err;
+      }
     },
+    retry: 1,
   });
-  const { data: swipes } = useQuery({
+  const { data: swipes, error: swipesError, isLoading: swipesLoading } = useQuery({
     queryKey: QUERY_KEYS.adminSwipes,
     queryFn: async () => {
-      const r: any = await client.models.Swipe.list({ limit: 1000 });
-      return r?.data ?? [];
+      try {
+        const r: any = await client.models.Swipe?.list?.({ limit: 1000 });
+        return r?.data ?? [];
+      } catch (err) {
+        console.error("Error loading swipes:", err);
+        throw err;
+      }
     },
+    retry: 1,
   });
+
+  if (usersLoading || matchesLoading || swipesLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+      </div>
+    );
+  }
+
+  if (usersError || matchesError || swipesError) {
+    return (
+      <div className="rounded-xl bg-red-50 p-6 text-center">
+        <p className="text-sm text-red-600">データの読み込みに失敗しました</p>
+        {usersError && <p className="text-xs text-red-400 mt-1">Users: {usersError instanceof Error ? usersError.message : "Error"}</p>}
+        {matchesError && <p className="text-xs text-red-400 mt-1">Matches: {matchesError instanceof Error ? matchesError.message : "Error"}</p>}
+        {swipesError && <p className="text-xs text-red-400 mt-1">Swipes: {swipesError instanceof Error ? swipesError.message : "Error"}</p>}
+      </div>
+    );
+  }
 
   const totalUsers = users?.length ?? 0;
   const swipePackUsers = users?.filter((u: any) => u.hasUnlimitedSwipe).length ?? 0;
@@ -83,4 +121,22 @@ export default function StatsPanel() {
       </div>
     </div>
   );
+}
+
+export default function StatsPanel() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+      </div>
+    );
+  }
+
+  return <StatsPanelContent />;
 }

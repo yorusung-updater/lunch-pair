@@ -20,7 +20,8 @@ export function useUnreadCounts(userId: string) {
       }
       return { counts: {}, total: 0 };
     },
-    refetchInterval: 10000, // 10秒ごとにポーリング
+    staleTime: 0, // すぐに stale にする
+    refetchInterval: 5000, // 5秒ごとにポーリング (短くした)
   });
 }
 
@@ -48,6 +49,8 @@ export function useMarkAsRead(userId: string) {
         // Ignore — race condition or permission issue
       }
     }
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.unreadCounts(userId) });
+    // Invalidate and immediately refetch
+    await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.unreadCounts(userId) });
+    await queryClient.refetchQueries({ queryKey: QUERY_KEYS.unreadCounts(userId) });
   };
 }

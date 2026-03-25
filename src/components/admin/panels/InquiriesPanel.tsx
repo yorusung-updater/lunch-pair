@@ -19,14 +19,19 @@ export default function InquiriesPanel() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"ALL" | "OPEN" | "CLOSED">("ALL");
 
-  const { data: inquiries, isLoading } = useQuery({
+  const { data: inquiries, isLoading, error } = useQuery({
     queryKey: ["admin-inquiries"],
     queryFn: async () => {
-      const result: any = await client.models.Inquiry.list({ limit: 200 });
-      const items = (result?.data ?? []) as Inquiry[];
-      return items.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      try {
+        const result: any = await client.models.Inquiry?.list?.({ limit: 200 });
+        const items = (result?.data ?? []) as Inquiry[];
+        return items.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      } catch (err) {
+        console.error("Error loading inquiries:", err);
+        throw err;
+      }
     },
   });
 
@@ -49,6 +54,15 @@ export default function InquiriesPanel() {
     } catch {
       toast.error("削除に失敗しました");
     }
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl bg-red-50 p-6 text-center">
+        <p className="text-sm text-red-600">データの読み込みに失敗しました</p>
+        <p className="text-xs text-red-400 mt-1">{error instanceof Error ? error.message : "Unknown error"}</p>
+      </div>
+    );
   }
 
   if (isLoading) {

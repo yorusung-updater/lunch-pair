@@ -1,0 +1,112 @@
+[
+  {
+    "email": "test1@example.com",
+    "displayName": "田中太郎",
+    "department": "営業",
+    "lunchTime": "11:30-12:30",
+    "lunchBudget": "800-1000円",
+    "lunchArea": "丸の内",
+    "preferences": ["和食", "カフェ", "居酒屋"],
+    "ethicalScale": "意識している",
+    "ethicalTags": ["サステナビリティ", "地域活性化"]
+  },
+  {
+    "email": "test2@example.com",
+    "displayName": "佐藤花子",
+    "department": "企画",
+    "lunchTime": "12:00-13:00",
+    "lunchBudget": "1000-1500円",
+    "lunchArea": "銀座",
+    "preferences": ["カフェ", "イタリアン"],
+    "ethicalScale": "少し意識している",
+    "ethicalTags": ["環境配慮"]
+  },
+  {
+    "email": "test3@example.com",
+    "displayName": "鈴木健太",
+    "department": "エンジニア",
+    "lunchTime": "12:30-13:30",
+    "lunchBudget": "1500-2000円",
+    "lunchArea": "新宿",
+    "preferences": ["ラーメン", "定食"],
+    "ethicalScale": "あまり意識していない",
+    "ethicalTags": ["テクノロジー"]
+  },
+  {
+    "email": "test4@example.com",
+    "displayName": "渡辺美咲",
+    "department": "デザイン",
+    "lunchTime": "11:30-12:30",
+    "lunchBudget": "1000-1500円",
+    "lunchArea": "渋谷",
+    "preferences": ["カフェ", "ヘルシー"],
+    "ethicalScale": "意識している",
+    "ethicalTags": ["サステナビリティ", "フェアトレード"]
+  },
+  {
+    "email": "test5@example.com",
+    "displayName": "山田次郎",
+    "department": "マーケ",
+    "lunchTime": "12:00-13:00",
+    "lunchBudget": "800-1000円",
+    "lunchArea": "六本木",
+    "preferences": ["和食", "寿司"],
+    "ethicalScale": "意識している",
+    "ethicalTags": ["地域活性化"]
+  },
+  {
+    "email": "test6@example.com",
+    "displayName": "小林優子",
+    "department": "営業",
+    "lunchTime": "12:30-13:30",
+    "lunchBudget": "1500-2000円",
+    "lunchArea": "丸の内",
+    "preferences": ["フレンチ", "ワイン"],
+    "ethicalScale": "少し意識している",
+    "ethicalTags": ["環境配慮", "労働環境"]
+  },
+  {
+    "email": "test7@example.com",
+    "displayName": "加藤翔太",
+    "department": "企画",
+    "lunchTime": "11:30-12:30",
+    "lunchBudget": "1000-1500円",
+    "lunchArea": "銀座",
+    "preferences": ["和食", "BBQ"],
+    "ethicalScale": "意識している",
+    "ethicalTags": ["サステナビリティ"]
+  },
+  {
+    "email": "test8@example.com",
+    "displayName": "中村由美",
+    "department": "エンジニア",
+    "lunchTime": "12:00-13:00",
+    "lunchBudget": "800-1000円",
+    "lunchArea": "新宿",
+    "preferences": ["ヘルシー", "ベジタリアン"],
+    "ethicalScale": "意識している",
+    "ethicalTags": ["動物保護", "環境配慮"]
+  },
+  {
+    "email": "test9@example.com",
+    "displayName": "伊藤健二",
+    "department": "デザイン",
+    "lunchTime": "12:30-13:30",
+    "lunchBudget": "1500-2000円",
+    "lunchArea": "渋谷",
+    "preferences": ["カフェ", "イタリアン", "スペイン"],
+    "ethicalScale": "少し意識している",
+    "ethicalTags": ["フェアトレード"]
+  },
+  {
+    "email": "test10@example.com",
+    "displayName": "木村美優",
+    "department": "マーケ",
+    "lunchTime": "11:30-12:30",
+    "lunchBudget": "1000-1500円",
+    "lunchArea": "六本木",
+    "preferences": ["和食", "カフェ", "居酒屋"],
+    "ethicalScale": "意識している",
+    "ethicalTags": ["サステナビリティ", "地域活性化"]
+  }
+]

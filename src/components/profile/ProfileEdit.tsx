@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/api-client";
 import { PREFERENCE_OPTIONS } from "@/constants/preferences";
@@ -49,6 +49,40 @@ export default function ProfileEdit({ userId, profile, onCancel, onSaved }: Prof
   );
   const [ethicalScale, setEthicalScale] = useState(profile.ethicalScale ?? "");
   const [ethicalMatchingStance, setEthicalMatchingStance] = useState(profile.ethicalMatchingStance ?? "");
+
+  // テストアカウントの場合は自動でテストデータをロード
+  useEffect(() => {
+    const loadTestData = async () => {
+      // ユーザーIDがtest1~test10の場合
+      if (userId && userId.match(/^test\d+$/)) {
+        try {
+          const response = await fetch("/test-profiles.json");
+          const testProfiles = await response.json();
+          const testData = testProfiles.find(
+            (p: any) => p.email.replace("@example.com", "") === userId
+          );
+
+          if (testData) {
+            setDisplayName(testData.displayName);
+            setDepartment(testData.department);
+            setPreferenceFreeText("ランチを一緒に食べられる同僚を探しています。");
+            setSelectedPrefs(testData.preferences || []);
+            setLunchTime(testData.lunchTime);
+            setLunchBudget(testData.lunchBudget);
+            setLunchArea(testData.lunchArea);
+            setEthicalScale(testData.ethicalScale);
+            setEthicalTags(testData.ethicalTags || []);
+            setEthicalMatchingStance("価値観の違いを尊重したい");
+            setSelectedLunchDays(["月", "水", "金"]);
+          }
+        } catch (error) {
+          console.log("Test data load skipped");
+        }
+      }
+    };
+
+    loadTestData();
+  }, [userId]);
 
   function togglePref(pref: string) {
     setSelectedPrefs((prev) =>

@@ -7,7 +7,7 @@ export function useAdminUsers() {
     queryKey: QUERY_KEYS.adminUsers,
     queryFn: async () => {
       const r: any = await client.models.UserProfile.list({ limit: 1000 });
-      return r?.data ?? [];
+      return (r?.data ?? []).filter((u: any) => u && u.userId);
     },
   });
 }

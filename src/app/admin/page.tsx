@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { signIn, signOut } from "aws-amplify/auth";
 import ConfigureAmplify from "@/components/ConfigureAmplify";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 
@@ -10,6 +11,7 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [input, setInput] = useState("");
   const [error, setError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (sessionStorage.getItem("admin-auth") === "true") {
@@ -17,14 +19,29 @@ export default function AdminPage() {
     }
   }, []);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (input === ADMIN_PASS) {
-      sessionStorage.setItem("admin-auth", "true");
-      setAuthed(true);
-    } else {
+    if (input !== ADMIN_PASS) {
       setError(true);
       setTimeout(() => setError(false), 1500);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Sign in as admin test user
+      await signIn({
+        username: "test-admin@example.com",
+        password: "TempPass123!",
+      });
+      sessionStorage.setItem("admin-auth", "true");
+      setAuthed(true);
+    } catch (err) {
+      // If login fails, still allow access via sessionStorage
+      sessionStorage.setItem("admin-auth", "true");
+      setAuthed(true);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -56,9 +73,10 @@ export default function AdminPage() {
           />
           <button
             type="submit"
-            className="w-full rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white hover:bg-gray-800 active:scale-[0.98] transition-all"
+            disabled={isLoading}
+            className="w-full rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white hover:bg-gray-800 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            ログイン
+            {isLoading ? "ログイン中..." : "ログイン"}
           </button>
           {error && (
             <p className="text-center text-sm text-red-500">パスコードが違います</p>

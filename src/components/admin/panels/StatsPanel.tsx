@@ -67,11 +67,11 @@ function StatsPanelContent() {
   }
 
   const totalUsers = users?.length ?? 0;
-  const swipePackUsers = users?.filter((u: any) => u.hasUnlimitedSwipe).length ?? 0;
-  const likesPackUsers = users?.filter((u: any) => u.hasLikesReveal).length ?? 0;
+  const swipePackUsers = users?.filter((u: any) => u?.hasUnlimitedSwipe).length ?? 0;
+  const likesPackUsers = users?.filter((u: any) => u?.hasLikesReveal).length ?? 0;
   const totalMatches = matches?.length ?? 0;
   const totalSwipes = swipes?.length ?? 0;
-  const okSwipes = swipes?.filter((s: any) => s.direction === "OK").length ?? 0;
+  const okSwipes = swipes?.filter((s: any) => s?.direction === "OK").length ?? 0;
   const matchRate = okSwipes > 0 ? ((totalMatches * 2) / okSwipes * 100).toFixed(1) : "0";
 
   const stats = [
@@ -104,15 +104,17 @@ function StatsPanelContent() {
         {matches && matches.length > 0 ? (
           <div className="space-y-2">
             {matches.slice(0, 5).map((m: any) => (
-              <div key={`${m.user1Id}-${m.user2Id}`} className="flex items-center gap-2 text-sm">
-                <span className="text-pink-500">💑</span>
-                <span className="font-medium">{m.user1DisplayName || m.user1Id.slice(0, 8)}</span>
-                <span className="text-gray-400">×</span>
-                <span className="font-medium">{m.user2DisplayName || m.user2Id.slice(0, 8)}</span>
-                <span className="ml-auto text-xs text-gray-400">
-                  {m.createdAt ? formatDate(m.createdAt) : ""}
-                </span>
-              </div>
+              m && (
+                <div key={`${m.user1Id}-${m.user2Id}`} className="flex items-center gap-2 text-sm">
+                  <span className="text-pink-500">💑</span>
+                  <span className="font-medium">{m.user1DisplayName || m.user1Id?.slice(0, 8)}</span>
+                  <span className="text-gray-400">×</span>
+                  <span className="font-medium">{m.user2DisplayName || m.user2Id?.slice(0, 8)}</span>
+                  <span className="ml-auto text-xs text-gray-400">
+                    {m.createdAt ? formatDate(m.createdAt) : ""}
+                  </span>
+                </div>
+              )
             ))}
           </div>
         ) : (

@@ -80,7 +80,14 @@ export default function ChatPage({
     if (messages && messages.length > 0) {
       markAsRead(chatId);
     }
-  }, [messages?.length, chatId]);
+  }, [messages?.length, chatId, markAsRead]);
+
+  // Mark as read when leaving the chat
+  useEffect(() => {
+    return () => {
+      markAsRead(chatId);
+    };
+  }, [chatId, markAsRead]);
 
   useEffect(() => {
     let sub: any;

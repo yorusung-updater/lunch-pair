@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signOut } from "aws-amplify/auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { lazy, Suspense } from "react";
@@ -97,7 +98,12 @@ function AdminContent() {
             <h1 className="font-bold text-gray-900">一緒にランチ行きましょう 管理画面</h1>
           </div>
           <button
-            onClick={() => {
+            onClick={async () => {
+              try {
+                await signOut();
+              } catch {
+                // Ignore sign out errors
+              }
               sessionStorage.removeItem("admin-auth");
               window.location.reload();
             }}

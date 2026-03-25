@@ -7,7 +7,7 @@ export function useAdminSwipes() {
     queryKey: QUERY_KEYS.adminSwipes,
     queryFn: async () => {
       const r: any = await client.models.Swipe.list({ limit: 1000 });
-      return (r?.data ?? []).sort((a: any, b: any) =>
+      return (r?.data ?? []).filter((s: any) => s && s.swiperId && s.targetId).sort((a: any, b: any) =>
         (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
       );
     },

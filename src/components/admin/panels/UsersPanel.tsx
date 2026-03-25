@@ -31,7 +31,7 @@ export default function UsersPanel() {
         <span className="text-sm text-gray-400">{users?.length ?? 0}名</span>
       </div>
       <div className="space-y-2">
-        {users?.map((u: any) => (
+        {users?.map((u: any) => u && (
           <div key={u.userId} className="rounded-xl bg-white p-4 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 font-bold text-orange-600 text-sm">

@@ -72,7 +72,6 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.ownerDefinedIn("userId"),
       allow.authenticated().to(["read", "create", "update", "delete"]),
-      allow.apiKey().to(["read"]),
     ]),
 
   Swipe: a
@@ -88,7 +87,6 @@ const schema = a.schema({
     ])
     .authorization((allow) => [
       allow.authenticated(),
-      allow.apiKey().to(["read"]),
     ]),
 
   Match: a
@@ -105,7 +103,6 @@ const schema = a.schema({
     ])
     .authorization((allow) => [
       allow.authenticated(),
-      allow.apiKey().to(["read"]),
     ]),
 
   ChatMessage: a

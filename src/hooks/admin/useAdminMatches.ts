@@ -7,7 +7,7 @@ export function useAdminMatches() {
     queryKey: QUERY_KEYS.adminMatches,
     queryFn: async () => {
       const r: any = await client.models.Match.list({ limit: 1000 });
-      return r?.data ?? [];
+      return (r?.data ?? []).filter((m: any) => m && m.user1Id && m.user2Id);
     },
   });
 }

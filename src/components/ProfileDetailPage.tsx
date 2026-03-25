@@ -1,17 +1,24 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import type { ViewableProfile } from "@/types";
+import ReportSheet from "@/components/ReportSheet";
 
 export default function ProfileDetailPage({
   profile,
   onBack,
   onChat,
+  currentUserId,
+  currentUserName,
 }: {
   profile: ViewableProfile;
   onBack: () => void;
   onChat?: () => void;
+  currentUserId?: string;
+  currentUserName?: string;
 }) {
+  const [showReport, setShowReport] = useState(false);
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-white">
       {/* Header */}
@@ -130,6 +137,39 @@ export default function ProfileDetailPage({
             </div>
           )}
 
+          {/* Ethical profile (only shown when matched) */}
+          {(profile.ethicalScale || (profile.ethicalTags && profile.ethicalTags.length > 0) || profile.ethicalMatchingStance) && (
+            <div className="mt-5 rounded-xl bg-emerald-50/50 p-4 space-y-2.5">
+              <h3 className="text-xs font-semibold text-muted-foreground">🌱 エシカルプロフィール</h3>
+              {profile.ethicalScale && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground w-16 shrink-0">実践度</span>
+                  <Badge variant="outline" className="border-emerald-300 text-emerald-600 bg-emerald-50">
+                    {profile.ethicalScale}
+                  </Badge>
+                </div>
+              )}
+              {profile.ethicalTags && profile.ethicalTags.length > 0 && (
+                <div>
+                  <span className="text-xs text-muted-foreground">関心分野</span>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {profile.ethicalTags.map((tag: string) => (
+                      <Badge key={tag} variant="outline" className="border-emerald-300 text-emerald-600 bg-emerald-50 text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {profile.ethicalMatchingStance && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground w-16 shrink-0">姿勢</span>
+                  <span>{profile.ethicalMatchingStance}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Chat button */}
           {onChat && (
             <button
@@ -139,8 +179,28 @@ export default function ProfileDetailPage({
               💬 メッセージを送る
             </button>
           )}
+
+          {/* Report button */}
+          {currentUserId && (
+            <button
+              onClick={() => setShowReport(true)}
+              className="mt-3 w-full py-2.5 text-xs text-gray-400 hover:text-red-500 transition-colors"
+            >
+              このユーザーを通報する
+            </button>
+          )}
         </div>
       </div>
+
+      {showReport && currentUserId && (
+        <ReportSheet
+          reporterId={currentUserId}
+          reporterName={currentUserName ?? ""}
+          targetId={profile.userId}
+          targetName={profile.displayName ?? "不明"}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </div>
   );
 }

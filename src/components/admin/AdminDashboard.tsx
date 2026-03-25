@@ -8,13 +8,15 @@ import StatsPanel from "./panels/StatsPanel";
 import UsersPanel from "./panels/UsersPanel";
 import MatchesPanel from "./panels/MatchesPanel";
 import SwipesPanel from "./panels/SwipesPanel";
+import InquiriesPanel from "./panels/InquiriesPanel";
+import ReportsPanel from "./panels/ReportsPanel";
 
 const SimulationPanel = lazy(() => import("./panels/SimulationPanel"));
 const AnalyticsPanel = lazy(() => import("./panels/AnalyticsPanel"));
 
 const queryClient = new QueryClient();
 
-type Tab = "users" | "matches" | "swipes" | "stats" | "simulation" | "analytics";
+type Tab = "users" | "matches" | "swipes" | "stats" | "simulation" | "analytics" | "inquiries" | "reports";
 
 export default function AdminDashboard() {
   return (
@@ -33,6 +35,8 @@ function AdminContent() {
     { id: "users", label: "ユーザー" },
     { id: "matches", label: "マッチ" },
     { id: "swipes", label: "スワイプ" },
+    { id: "reports", label: "通報" },
+    { id: "inquiries", label: "問い合わせ" },
     { id: "simulation", label: "シミュレーション" },
     { id: "analytics", label: "分析" },
   ];
@@ -83,6 +87,8 @@ function AdminContent() {
         {tab === "users" && <UsersPanel />}
         {tab === "matches" && <MatchesPanel />}
         {tab === "swipes" && <SwipesPanel />}
+        {tab === "reports" && <ReportsPanel />}
+        {tab === "inquiries" && <InquiriesPanel />}
         {tab === "simulation" && (
           <Suspense fallback={<div className="text-center py-8 text-gray-400">読み込み中...</div>}>
             <SimulationPanel />

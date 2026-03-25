@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/api-client";
 import { QUERY_KEYS } from "@/constants/query-keys";
@@ -9,7 +10,53 @@ import { useUiStore } from "@/stores/ui-store";
 import { toast } from "sonner";
 import type { ViewableProfile } from "@/types";
 
+type SubTab = "received" | "sent";
+
 export default function LikesPage({ userId }: { userId: string }) {
+  const [subTab, setSubTab] = useState<SubTab>("received");
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Sub-tab navigation */}
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b px-4 pt-3">
+        <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
+          <button
+            onClick={() => setSubTab("received")}
+            className={`flex-1 rounded-md py-2 text-sm font-medium transition-all ${
+              subTab === "received"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500"
+            }`}
+          >
+            お相手から
+          </button>
+          <button
+            onClick={() => setSubTab("sent")}
+            className={`flex-1 rounded-md py-2 text-sm font-medium transition-all ${
+              subTab === "sent"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500"
+            }`}
+          >
+            自分から
+          </button>
+        </div>
+      </div>
+
+      {/* Tab content */}
+      <div className="flex-1 overflow-y-auto">
+        {subTab === "received" ? (
+          <ReceivedLikes userId={userId} />
+        ) : (
+          <SentLikes userId={userId} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ===== お相手から (Received Likes) ===== */
+function ReceivedLikes({ userId }: { userId: string }) {
   const queryClient = useQueryClient();
   const { setMatchModal } = useUiStore();
 
@@ -41,9 +88,10 @@ export default function LikesPage({ userId }: { userId: string }) {
       const result: any = await client.mutations.recordSwipe({ targetId, direction });
       if (result?.data?.isMatch) {
         setMatchModal(true, targetId);
-        toast.success("マッチしました！🎉");
+        toast.success("マッチしました！");
       }
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.whoLikedMe(userId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myLikes(userId) });
     } catch (err) {
       console.error("Swipe failed:", err);
     }
@@ -89,7 +137,7 @@ export default function LikesPage({ userId }: { userId: string }) {
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-64 items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
@@ -98,14 +146,14 @@ export default function LikesPage({ userId }: { userId: string }) {
   return (
     <div className="p-4">
       <div className="flex items-center gap-2 mb-4">
-        <h1 className="text-xl font-bold">お相手から</h1>
+        <h2 className="text-lg font-bold">あなたにいいねした人</h2>
         {likesData && likesData.count > 0 && (
           <Badge className="bg-amber-500">{likesData.count}</Badge>
         )}
       </div>
 
       {!likesData || likesData.profiles.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-4 pt-20 text-center">
+        <div className="flex flex-col items-center justify-center gap-4 pt-16 text-center">
           <span className="text-5xl">💛</span>
           <p className="text-muted-foreground">まだいいねされていません</p>
         </div>
@@ -119,7 +167,7 @@ export default function LikesPage({ userId }: { userId: string }) {
                     {liker.photo2Url ? (
                       <img src={liker.photo2Url} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-2xl">🍽️</div>
+                      <div className="flex h-full w-full items-center justify-center text-2xl">🍽</div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -156,5 +204,125 @@ export default function LikesPage({ userId }: { userId: string }) {
         </div>
       )}
     </div>
+  );
+}
+
+/* ===== 自分から (Sent Likes) ===== */
+function SentLikes({ userId }: { userId: string }) {
+  const { data: likesData, isLoading } = useQuery({
+    queryKey: QUERY_KEYS.myLikes(userId),
+    queryFn: async () => {
+      const result: any = await client.queries.getMyLikes({ limit: 50 });
+      if (result?.data?.profiles) {
+        return {
+          profiles: JSON.parse(result.data.profiles) as ViewableProfile[],
+          count: result.data.count ?? 0,
+        };
+      }
+      return { profiles: [], count: 0 };
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  const matched = likesData?.profiles.filter((p) => p.isMatched) ?? [];
+  const pending = likesData?.profiles.filter((p) => !p.isMatched) ?? [];
+
+  return (
+    <div className="p-4">
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-lg font-bold">自分がいいねした人</h2>
+        {likesData && likesData.count > 0 && (
+          <Badge variant="outline">{likesData.count}</Badge>
+        )}
+      </div>
+
+      {!likesData || likesData.profiles.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-4 pt-16 text-center">
+          <span className="text-5xl">💗</span>
+          <p className="text-muted-foreground">まだいいねしていません</p>
+          <p className="text-xs text-muted-foreground">「さがす」タブでスワイプしてみましょう</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Matched section */}
+          {matched.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-emerald-600 mb-2">
+                マッチ済み ({matched.length})
+              </p>
+              <div className="space-y-2">
+                {matched.map((p) => (
+                  <SentLikeCard key={p.userId} profile={p} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Pending section */}
+          {pending.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground mb-2">
+                返事待ち ({pending.length})
+              </p>
+              <div className="space-y-2">
+                {pending.map((p) => (
+                  <SentLikeCard key={p.userId} profile={p} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SentLikeCard({ profile }: { profile: ViewableProfile }) {
+  return (
+    <Card>
+      <CardContent className="p-3">
+        <div className="flex items-center gap-3">
+          <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
+            {(profile.isMatched && profile.photo1Url) ? (
+              <img src={profile.photo1Url} alt="" className="h-full w-full object-cover" />
+            ) : profile.photo2Url ? (
+              <img src={profile.photo2Url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-xl">🍽</div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              {profile.isMatched && profile.displayName ? (
+                <p className="text-sm font-semibold truncate">{profile.displayName}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">名前非公開</p>
+              )}
+              {profile.isMatched && (
+                <Badge className="bg-emerald-500 text-[10px] px-1.5 py-0">マッチ済み</Badge>
+              )}
+            </div>
+            {profile.department && (
+              <p className="text-xs text-muted-foreground">{profile.department}</p>
+            )}
+            <div className="flex flex-wrap gap-1 mt-1">
+              {profile.preferences?.slice(0, 3).map((p) => (
+                <Badge key={p} variant="outline" className="text-[10px] px-1.5 py-0">{p}</Badge>
+              ))}
+            </div>
+          </div>
+          {!profile.isMatched && (
+            <span className="shrink-0 text-xs text-muted-foreground">返事待ち</span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

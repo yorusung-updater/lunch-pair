@@ -9,6 +9,7 @@ import LunchSettingsForm from "@/components/LunchSettingsForm";
 import PhotoUploadSection from "@/components/profile/PhotoUploadSection";
 import BasicInfoSection from "@/components/profile/BasicInfoSection";
 import PreferencesSection from "@/components/profile/PreferencesSection";
+import EthicalSection from "@/components/profile/EthicalSection";
 
 export default function ProfileSetup({
   userId,
@@ -19,7 +20,6 @@ export default function ProfileSetup({
 }) {
   const [displayName, setDisplayName] = useState("");
   const [department, setDepartment] = useState("");
-  const [excludeSameDivision, setExcludeSameDivision] = useState(false);
   const [preferenceFreeText, setPreferenceFreeText] = useState("");
   const [selectedPrefs, setSelectedPrefs] = useState<string[]>([]);
   const [photo1, setPhoto1] = useState<File | null>(null);
@@ -34,6 +34,9 @@ export default function ProfileSetup({
   const [lunchTime, setLunchTime] = useState("");
   const [lunchBudget, setLunchBudget] = useState("");
   const [lunchArea, setLunchArea] = useState("");
+  const [ethicalTags, setEthicalTags] = useState<string[]>([]);
+  const [ethicalScale, setEthicalScale] = useState("");
+  const [ethicalMatchingStance, setEthicalMatchingStance] = useState("");
   const [loading, setLoading] = useState(false);
 
   const photoSetters: [(f: File | null) => void, (url: string | null) => void][] = [
@@ -81,13 +84,15 @@ export default function ProfileSetup({
         preferences: selectedPrefs,
         preferenceFreeText: preferenceFreeText || undefined,
         department: department || undefined,
-        excludeSameDivision,
         lunchDays: selectedLunchDays.length > 0 ? selectedLunchDays : undefined,
         lunchTime: lunchTime || undefined,
         lunchBudget: lunchBudget || undefined,
         lunchArea: lunchArea || undefined,
         hasUnlimitedSwipe: false,
         hasLikesReveal: false,
+        ethicalTags: ethicalTags.length > 0 ? ethicalTags : undefined,
+        ethicalScale: ethicalScale || undefined,
+        ethicalMatchingStance: ethicalMatchingStance || undefined,
       });
 
       onComplete();
@@ -120,10 +125,8 @@ export default function ProfileSetup({
         <BasicInfoSection
           displayName={displayName}
           department={department}
-          excludeSameDivision={excludeSameDivision}
           onNameChange={setDisplayName}
           onDepartmentChange={setDepartment}
-          onExcludeSameDivisionChange={setExcludeSameDivision}
         />
 
         <PreferencesSection
@@ -151,6 +154,16 @@ export default function ProfileSetup({
             />
           </CardContent>
         </Card>
+
+        {/* Ethical Profile */}
+        <EthicalSection
+          selectedTags={ethicalTags}
+          onTagsChange={setEthicalTags}
+          scale={ethicalScale}
+          onScaleChange={setEthicalScale}
+          matchingStance={ethicalMatchingStance}
+          onMatchingStanceChange={setEthicalMatchingStance}
+        />
 
         <Button
           onClick={handleSubmit}

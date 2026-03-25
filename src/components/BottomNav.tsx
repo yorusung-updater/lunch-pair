@@ -74,9 +74,11 @@ const tabs: { id: Tab; label: string; Icon: React.FC<{ active: boolean }> }[] = 
 export default function BottomNav({
   activeTab,
   onTabChange,
+  unreadCount = 0,
 }: {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
+  unreadCount?: number;
 }) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]">
@@ -87,13 +89,20 @@ export default function BottomNav({
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] transition-all ${
+              className={`relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] transition-all ${
                 isActive
                   ? "text-orange-500 font-semibold"
                   : "text-gray-400"
               }`}
             >
-              <tab.Icon active={isActive} />
+              <div className="relative">
+                <tab.Icon active={isActive} />
+                {tab.id === "matches" && unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+              </div>
               <span>{tab.label}</span>
             </button>
           );

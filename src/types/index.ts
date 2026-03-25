@@ -14,6 +14,9 @@ export type ViewableProfile = {
   lunchTime: string | null;
   lunchBudget: string | null;
   lunchArea: string | null;
+  ethicalTags: string[] | null;
+  ethicalScale: string | null;
+  ethicalMatchingStance: string | null;
   matchingPrefsCount?: number;
   isMatched: boolean;
 };

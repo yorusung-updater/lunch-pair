@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { client } from "@/lib/api-client";
 import { useMatches } from "@/hooks/use-matches";
+import { useUnreadCounts } from "@/hooks/use-unread";
 import type { ViewableProfile, MatchEntry } from "@/types";
 import { formatDate } from "@/utils/date";
+import { getChatId } from "@/utils/chat";
 import ChatPage from "./ChatPage";
 import ProfileDetailPage from "@/components/ProfileDetailPage";
 
@@ -13,6 +15,7 @@ export default function MatchesPage({ userId }: { userId: string }) {
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [chatTarget, setChatTarget] = useState<MatchEntry | null>(null);
   const { data: matches, isLoading } = useMatches(userId);
+  const { data: unread } = useUnreadCounts(userId);
 
   async function viewProfile(matchedUserId: string) {
     setLoadingProfile(true);
@@ -36,6 +39,7 @@ export default function MatchesPage({ userId }: { userId: string }) {
       <ProfileDetailPage
         profile={selectedMatch}
         onBack={() => setSelectedMatch(null)}
+        currentUserId={userId}
         onChat={() => {
           const match = matches?.find((m) => m.matchedUserId === selectedMatch.userId);
           if (match) {
@@ -89,46 +93,56 @@ export default function MatchesPage({ userId }: { userId: string }) {
         </div>
       ) : (
         <div className="space-y-3">
-          {matches.map((match) => (
-            <div
-              key={match.matchedUserId}
-              onClick={() => setChatTarget(match)}
-              className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
-            >
+          {matches.map((match) => {
+            const chatId = getChatId(userId, match.matchedUserId);
+            const unreadCount = unread?.counts[chatId] ?? 0;
+            return (
               <div
-                className="relative shrink-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  viewProfile(match.matchedUserId);
-                }}
+                key={match.matchedUserId}
+                onClick={() => setChatTarget(match)}
+                className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
               >
-                {match.photoUrl ? (
-                  <img
-                    src={match.photoUrl}
-                    alt={match.displayName}
-                    className="h-14 w-14 rounded-full object-cover border-2 border-orange-200"
-                  />
-                ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-100 text-lg font-bold text-orange-600 border-2 border-orange-200">
-                    {match.displayName.charAt(0)}
-                  </div>
-                )}
-                <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-green-400 border-2 border-white" />
+                <div
+                  className="relative shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    viewProfile(match.matchedUserId);
+                  }}
+                >
+                  {match.photoUrl ? (
+                    <img
+                      src={match.photoUrl}
+                      alt={match.displayName}
+                      className="h-14 w-14 rounded-full object-cover border-2 border-orange-200"
+                    />
+                  ) : (
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-100 text-lg font-bold text-orange-600 border-2 border-orange-200">
+                      {match.displayName.charAt(0)}
+                    </div>
+                  )}
+                  {unreadCount > 0 ? (
+                    <div className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white border-2 border-white">
+                      {unreadCount}
+                    </div>
+                  ) : (
+                    <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-green-400 border-2 border-white" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-[15px] truncate">{match.displayName}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {match.matchedAt ? formatDate(match.matchedAt) + " マッチ" : ""}
+                  </p>
+                </div>
+                <div className="relative flex items-center gap-1.5 shrink-0 rounded-full bg-orange-50 px-3.5 py-2 text-orange-600">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  <span className="text-xs font-semibold">話す</span>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-[15px] truncate">{match.displayName}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {match.matchedAt ? formatDate(match.matchedAt) + " マッチ" : ""}
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0 rounded-full bg-orange-50 px-3.5 py-2 text-orange-600">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-                <span className="text-xs font-semibold">話す</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

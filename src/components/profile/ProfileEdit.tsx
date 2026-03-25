@@ -8,19 +8,22 @@ import { QUERY_KEYS } from "@/constants/query-keys";
 import { toast } from "sonner";
 import { DIVISIONS } from "@/constants/divisions";
 import LunchSettingsForm from "@/components/LunchSettingsForm";
+import EthicalSection from "@/components/profile/EthicalSection";
 
 interface ProfileEditProps {
   userId: string;
   profile: {
     displayName: string;
     department: string | null;
-    excludeSameDivision: boolean | null;
     preferenceFreeText: string | null;
     preferences: string[] | null;
     lunchDays: string[] | null;
     lunchTime: string | null;
     lunchBudget: string | null;
     lunchArea: string | null;
+    ethicalTags: string[] | null;
+    ethicalScale: string | null;
+    ethicalMatchingStance: string | null;
   };
   onCancel: () => void;
   onSaved: () => void;
@@ -31,7 +34,6 @@ export default function ProfileEdit({ userId, profile, onCancel, onSaved }: Prof
   const [saving, setSaving] = useState(false);
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [department, setDepartment] = useState(profile.department ?? "");
-  const [excludeSameDivision, setExcludeSameDivision] = useState(profile.excludeSameDivision ?? false);
   const [preferenceFreeText, setPreferenceFreeText] = useState(profile.preferenceFreeText ?? "");
   const [selectedPrefs, setSelectedPrefs] = useState<string[]>(
     (profile.preferences ?? []).filter((p: string) => !!p)
@@ -42,6 +44,11 @@ export default function ProfileEdit({ userId, profile, onCancel, onSaved }: Prof
   const [lunchTime, setLunchTime] = useState(profile.lunchTime ?? "");
   const [lunchBudget, setLunchBudget] = useState(profile.lunchBudget ?? "");
   const [lunchArea, setLunchArea] = useState(profile.lunchArea ?? "");
+  const [ethicalTags, setEthicalTags] = useState<string[]>(
+    (profile.ethicalTags ?? []).filter(Boolean)
+  );
+  const [ethicalScale, setEthicalScale] = useState(profile.ethicalScale ?? "");
+  const [ethicalMatchingStance, setEthicalMatchingStance] = useState(profile.ethicalMatchingStance ?? "");
 
   function togglePref(pref: string) {
     setSelectedPrefs((prev) =>
@@ -56,13 +63,15 @@ export default function ProfileEdit({ userId, profile, onCancel, onSaved }: Prof
         userId,
         displayName,
         department: department || undefined,
-        excludeSameDivision,
         preferenceFreeText: preferenceFreeText || undefined,
         preferences: selectedPrefs,
         lunchDays: selectedLunchDays.length > 0 ? selectedLunchDays : undefined,
         lunchTime: lunchTime || undefined,
         lunchBudget: lunchBudget || undefined,
         lunchArea: lunchArea || undefined,
+        ethicalTags: ethicalTags.length > 0 ? ethicalTags : undefined,
+        ethicalScale: ethicalScale || undefined,
+        ethicalMatchingStance: ethicalMatchingStance || undefined,
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myProfile(userId) });
       onSaved();
@@ -114,20 +123,6 @@ export default function ProfileEdit({ userId, profile, onCancel, onSaved }: Prof
             ))}
           </select>
         </div>
-        {department && (
-          <label className="flex items-center gap-3 cursor-pointer rounded-lg bg-gray-50 px-3 py-2.5">
-            <input
-              type="checkbox"
-              checked={excludeSameDivision}
-              onChange={(e) => setExcludeSameDivision(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-400"
-            />
-            <div>
-              <p className="text-sm font-medium text-gray-700">同じ本部のメンバーを除外する</p>
-              <p className="text-xs text-gray-400">異なる本部の人とだけマッチングします</p>
-            </div>
-          </label>
-        )}
 
         {/* Preferences */}
         <div>
@@ -165,6 +160,16 @@ export default function ProfileEdit({ userId, profile, onCancel, onSaved }: Prof
             />
           </div>
         </div>
+
+        {/* Ethical Profile */}
+        <EthicalSection
+          selectedTags={ethicalTags}
+          onTagsChange={setEthicalTags}
+          scale={ethicalScale}
+          onScaleChange={setEthicalScale}
+          matchingStance={ethicalMatchingStance}
+          onMatchingStanceChange={setEthicalMatchingStance}
+        />
 
         {/* Free text */}
         <div>

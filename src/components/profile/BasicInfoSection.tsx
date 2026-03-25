@@ -8,17 +8,13 @@ import { DIVISIONS } from "@/constants/divisions";
 export default function BasicInfoSection({
   displayName,
   department,
-  excludeSameDivision,
   onNameChange,
   onDepartmentChange,
-  onExcludeSameDivisionChange,
 }: {
   displayName: string;
   department: string;
-  excludeSameDivision: boolean;
   onNameChange: (value: string) => void;
   onDepartmentChange: (value: string) => void;
-  onExcludeSameDivisionChange: (value: boolean) => void;
 }) {
   return (
     <Card>
@@ -50,20 +46,6 @@ export default function BasicInfoSection({
             ))}
           </select>
         </div>
-        {department && (
-          <label className="flex items-center gap-3 cursor-pointer rounded-lg bg-gray-50 px-3 py-2.5">
-            <input
-              type="checkbox"
-              checked={excludeSameDivision}
-              onChange={(e) => onExcludeSameDivisionChange(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-400"
-            />
-            <div>
-              <p className="text-sm font-medium text-gray-700">同じ本部のメンバーを除外する</p>
-              <p className="text-xs text-gray-400">異なる本部の人とだけマッチングします</p>
-            </div>
-          </label>
-        )}
       </CardContent>
     </Card>
   );

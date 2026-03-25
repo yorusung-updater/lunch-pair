@@ -11,6 +11,7 @@ import ProfilePage from "./pages/ProfilePage";
 import ProfileSetup from "./pages/ProfileSetup";
 import MatchModal from "./MatchModal";
 import { useUiStore } from "@/stores/ui-store";
+import { useUnreadCounts } from "@/hooks/use-unread";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
@@ -24,9 +25,7 @@ export default function AppShell({
   signOut: () => void;
   user: AuthUser;
 }) {
-  const [activeTab, setActiveTab] = useState<Tab>("swipe");
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
-  const { showMatchModal, matchedUserId, setMatchModal } = useUiStore();
 
   useEffect(() => {
     checkProfile();
@@ -64,23 +63,37 @@ export default function AppShell({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex h-[100dvh] flex-col">
-        <main className="flex-1 overflow-y-auto pb-16">
-          {activeTab === "swipe" && <SwipePage userId={user.userId} />}
-          {activeTab === "matches" && <MatchesPage userId={user.userId} />}
-          {activeTab === "likes" && <LikesPage userId={user.userId} />}
-          {activeTab === "profile" && (
-            <ProfilePage userId={user.userId} signOut={signOut} />
-          )}
-        </main>
-        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
-        {showMatchModal && matchedUserId && (
-          <MatchModal
-            matchedUserId={matchedUserId}
-            onClose={() => setMatchModal(false)}
-          />
-        )}
-      </div>
+      <AppContent userId={user.userId} signOut={signOut} />
     </QueryClientProvider>
+  );
+}
+
+function AppContent({ userId, signOut }: { userId: string; signOut: () => void }) {
+  const [activeTab, setActiveTab] = useState<Tab>("swipe");
+  const { showMatchModal, matchedUserId, setMatchModal } = useUiStore();
+  const { data: unread } = useUnreadCounts(userId);
+
+  return (
+    <div className="flex h-[100dvh] flex-col">
+      <main className="flex-1 overflow-y-auto pb-16">
+        {activeTab === "swipe" && <SwipePage userId={userId} />}
+        {activeTab === "matches" && <MatchesPage userId={userId} />}
+        {activeTab === "likes" && <LikesPage userId={userId} />}
+        {activeTab === "profile" && (
+          <ProfilePage userId={userId} signOut={signOut} />
+        )}
+      </main>
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        unreadCount={unread?.total ?? 0}
+      />
+      {showMatchModal && matchedUserId && (
+        <MatchModal
+          matchedUserId={matchedUserId}
+          onClose={() => setMatchModal(false)}
+        />
+      )}
+    </div>
   );
 }

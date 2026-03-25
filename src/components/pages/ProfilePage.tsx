@@ -39,6 +39,7 @@ export default function ProfilePage({
 
   return (
     <ProfileView
+      userId={userId}
       profile={profile}
       onEdit={() => setEditing(true)}
       onPhotoUpdate={handlePhotoUpdate}

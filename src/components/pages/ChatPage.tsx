@@ -9,6 +9,8 @@ import { formatTime, formatDateFull } from "@/utils/date";
 import type { ChatMessage, ViewableProfile } from "@/types";
 import { SUGGESTIONS } from "@/constants/chat-suggestions";
 import ProfileDetailPage from "@/components/ProfileDetailPage";
+import ReportSheet from "@/components/ReportSheet";
+import { useMarkAsRead } from "@/hooks/use-unread";
 
 export default function ChatPage({
   userId,
@@ -24,11 +26,13 @@ export default function ChatPage({
   onBack: () => void;
 }) {
   const chatId = getChatId(userId, matchedUserId);
+  const markAsRead = useMarkAsRead(userId);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [profileData, setProfileData] = useState<ViewableProfile | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -70,6 +74,13 @@ export default function ChatPage({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Mark as read on mount and when new messages arrive
+  useEffect(() => {
+    if (messages && messages.length > 0) {
+      markAsRead(chatId);
+    }
+  }, [messages?.length, chatId]);
 
   useEffect(() => {
     let sub: any;
@@ -119,6 +130,7 @@ export default function ChatPage({
       <ProfileDetailPage
         profile={profileData}
         onBack={() => setShowProfile(false)}
+        currentUserId={userId}
       />
     );
   }
@@ -159,6 +171,15 @@ export default function ChatPage({
             <p className="font-semibold text-sm leading-tight">{matchedUserName}</p>
             <p className="text-[11px] text-orange-500">プロフィールを見る &gt;</p>
           </div>
+        </button>
+        <button
+          onClick={() => setShowReport(true)}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:text-red-500 hover:bg-red-50 active:scale-95 transition-all shrink-0"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+            <line x1="4" y1="22" x2="4" y2="15" />
+          </svg>
         </button>
       </div>
 
@@ -246,6 +267,16 @@ export default function ChatPage({
           </button>
         </div>
       </div>
+
+      {showReport && (
+        <ReportSheet
+          reporterId={userId}
+          reporterName=""
+          targetId={matchedUserId}
+          targetName={matchedUserName}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </div>
   );
 }

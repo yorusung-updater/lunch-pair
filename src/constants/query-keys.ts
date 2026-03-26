@@ -6,6 +6,7 @@ export const QUERY_KEYS = {
   myLikes: (userId: string) => ["myLikes", userId] as const,
   unreadCounts: (userId: string) => ["unreadCounts", userId] as const,
   chat: (chatId: string) => ["chat", chatId] as const,
+  lastMessages: (userId: string) => ["lastMessages", userId] as const,
   adminUsers: ["admin-users"] as const,
   adminMatches: ["admin-matches"] as const,
   adminSwipes: ["admin-swipes"] as const,

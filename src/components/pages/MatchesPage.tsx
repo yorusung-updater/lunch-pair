@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { client } from "@/lib/api-client";
 import { useMatches } from "@/hooks/use-matches";
 import { useUnreadCounts } from "@/hooks/use-unread";
+import { QUERY_KEYS } from "@/constants/query-keys";
 import type { ViewableProfile, MatchEntry } from "@/types";
-import { formatDate } from "@/utils/date";
 import { getChatId } from "@/utils/chat";
+// formatDate removed — showing last message instead of match date
 import ChatPage from "./ChatPage";
 import ProfileDetailPage from "@/components/ProfileDetailPage";
 
@@ -16,6 +18,33 @@ export default function MatchesPage({ userId }: { userId: string }) {
   const [chatTarget, setChatTarget] = useState<MatchEntry | null>(null);
   const { data: matches, isLoading } = useMatches(userId);
   const { data: unread } = useUnreadCounts(userId);
+
+  // Fetch last message for each match
+  const chatIds = (matches ?? []).map((m) => getChatId(userId, m.matchedUserId));
+  const { data: lastMessages } = useQuery({
+    queryKey: QUERY_KEYS.lastMessages(userId),
+    queryFn: async () => {
+      const results: Record<string, string> = {};
+      await Promise.all(
+        chatIds.map(async (chatId) => {
+          try {
+            const result: any = await client.models.ChatMessage
+              .listChatMessageByChatIdAndSentAt(
+                { chatId },
+                { sortDirection: "DESC", limit: 1 }
+              );
+            const msg = result?.data?.[0];
+            if (msg?.content) {
+              results[chatId] = msg.content;
+            }
+          } catch { /* ignore */ }
+        })
+      );
+      return results;
+    },
+    enabled: chatIds.length > 0,
+    refetchInterval: 10000,
+  });
 
   async function viewProfile(matchedUserId: string) {
     setLoadingProfile(true);
@@ -130,8 +159,8 @@ export default function MatchesPage({ userId }: { userId: string }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-[15px] truncate">{match.displayName}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {match.matchedAt ? formatDate(match.matchedAt) + " マッチ" : ""}
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {lastMessages?.[chatId] ?? "タップして会話を始めましょう"}
                   </p>
                 </div>
                 <div className="relative flex items-center gap-1.5 shrink-0 rounded-full bg-orange-50 px-3.5 py-2 text-orange-600">

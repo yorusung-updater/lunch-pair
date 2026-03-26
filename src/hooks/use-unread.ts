@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/api-client";
 import { QUERY_KEYS } from "@/constants/query-keys";
@@ -20,37 +21,21 @@ export function useUnreadCounts(userId: string) {
       }
       return { counts: {}, total: 0 };
     },
-    staleTime: 0, // すぐに stale にする
-    refetchInterval: 5000, // 5秒ごとにポーリング (短くした)
+    staleTime: 0,
+    refetchInterval: 5000,
   });
 }
 
 export function useMarkAsRead(userId: string) {
   const queryClient = useQueryClient();
 
-  return async (chatId: string) => {
-    const now = new Date().toISOString();
+  return useCallback(async (chatId: string) => {
     try {
-      // Try update first (existing record)
-      await client.models.ChatReadStatus.update({
-        chatId,
-        userId,
-        lastReadAt: now,
-      });
-    } catch {
-      // Record doesn't exist yet — create it
-      try {
-        await client.models.ChatReadStatus.create({
-          chatId,
-          userId,
-          lastReadAt: now,
-        });
-      } catch {
-        // Ignore — race condition or permission issue
-      }
+      await (client.mutations as any).markAsRead({ chatId });
+    } catch (e) {
+      console.error("markAsRead failed:", e);
     }
-    // Invalidate and immediately refetch
     await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.unreadCounts(userId) });
     await queryClient.refetchQueries({ queryKey: QUERY_KEYS.unreadCounts(userId) });
-  };
+  }, [userId, queryClient]);
 }

@@ -9,6 +9,7 @@ import {
   getWhoLikedMeHandler,
   getMyLikesHandler,
   getUnreadCountsHandler,
+  markAsReadHandler,
 } from "./data/resource";
 import { storage } from "./storage/resource";
 
@@ -22,6 +23,7 @@ const backend = defineBackend({
   getWhoLikedMeHandler,
   getMyLikesHandler,
   getUnreadCountsHandler,
+  markAsReadHandler,
 });
 
 // Get DynamoDB table names from the data stack
@@ -41,6 +43,7 @@ const allFunctions = [
   backend.getWhoLikedMeHandler,
   backend.getMyLikesHandler,
   backend.getUnreadCountsHandler,
+  backend.markAsReadHandler,
 ];
 
 for (const fn of allFunctions) {

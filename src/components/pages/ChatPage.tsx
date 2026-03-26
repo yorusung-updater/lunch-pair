@@ -82,13 +82,6 @@ export default function ChatPage({
     }
   }, [messages?.length, chatId, markAsRead]);
 
-  // Mark as read when leaving the chat
-  useEffect(() => {
-    return () => {
-      markAsRead(chatId);
-    };
-  }, [chatId, markAsRead]);
-
   useEffect(() => {
     let sub: any;
     try {
@@ -156,7 +149,7 @@ export default function ChatPage({
       {/* Header */}
       <div className="flex items-center gap-3 bg-white/80 backdrop-blur-sm border-b px-4 py-3 shadow-sm">
         <button
-          onClick={onBack}
+          onClick={() => { markAsRead(chatId); onBack(); }}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 active:scale-95 transition-all"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

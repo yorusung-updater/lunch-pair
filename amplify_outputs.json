@@ -1146,6 +1146,18 @@
               "attributes": []
             }
           }
+        },
+        "MarkAsReadResult": {
+          "name": "MarkAsReadResult",
+          "fields": {
+            "success": {
+              "name": "success",
+              "isArray": false,
+              "type": "Boolean",
+              "isRequired": false,
+              "attributes": []
+            }
+          }
         }
       },
       "queries": {
@@ -1280,6 +1292,22 @@
                 "enum": "RecordSwipeDirection"
               },
               "isRequired": false
+            }
+          }
+        },
+        "markAsRead": {
+          "name": "markAsRead",
+          "isArray": false,
+          "type": {
+            "nonModel": "MarkAsReadResult"
+          },
+          "isRequired": false,
+          "arguments": {
+            "chatId": {
+              "name": "chatId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
             }
           }
         }

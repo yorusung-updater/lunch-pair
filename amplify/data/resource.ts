@@ -42,6 +42,12 @@ export const getUnreadCountsHandler = defineFunction({
   resourceGroupName: "data",
 });
 
+export const markAsReadHandler = defineFunction({
+  name: "mark-as-read",
+  entry: "./mark-as-read/handler.ts",
+  resourceGroupName: "data",
+});
+
 // --- Schema definition ---
 const schema = a.schema({
   // ========== Models ==========
@@ -204,6 +210,10 @@ const schema = a.schema({
     total: a.integer(),
   }),
 
+  MarkAsReadResult: a.customType({
+    success: a.boolean(),
+  }),
+
   // ========== Custom Operations ==========
 
   recordSwipe: a
@@ -264,6 +274,15 @@ const schema = a.schema({
     .returns(a.ref("UnreadCountsResult"))
     .authorization((allow) => [allow.authenticated()])
     .handler(a.handler.function(getUnreadCountsHandler)),
+
+  markAsRead: a
+    .mutation()
+    .arguments({
+      chatId: a.string().required(),
+    })
+    .returns(a.ref("MarkAsReadResult"))
+    .authorization((allow) => [allow.authenticated()])
+    .handler(a.handler.function(markAsReadHandler)),
 });
 
 export type Schema = ClientSchema<typeof schema>;

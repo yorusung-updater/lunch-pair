@@ -77,11 +77,11 @@ async function createCognitoUser(email: string, tempPassword: string) {
   }
 }
 
-// S3에 사진 업로드
+// S3에 사진 업로드 (S3 key를 반환, presigned URL은 앱에서 생성)
 async function uploadPhotoToS3(filePath: string, userId: string, photoNumber: number): Promise<string> {
   const fileBuffer = readFileSync(filePath);
   const ext = extname(filePath);
-  const s3Key = `public/${userId}/photo${photoNumber}${ext}`;
+  const s3Key = `photos/${userId}/photo${photoNumber}${ext}`;
 
   await s3.send(
     new PutObjectCommand({
@@ -92,13 +92,12 @@ async function uploadPhotoToS3(filePath: string, userId: string, photoNumber: nu
     })
   );
 
-  const photoUrl = `https://${S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${s3Key}`;
   console.log(`✓ Photo uploaded: ${s3Key}`);
-  return photoUrl;
+  return s3Key;
 }
 
 // 프로필 생성
-async function createProfile(userId: string, user: TestUser, photoUrls: { photo1Url: string; photo2Url: string; photo3Url: string }) {
+async function createProfile(userId: string, user: TestUser, photoKeys: { photo1Key: string; photo2Key: string; photo3Key: string }) {
   Amplify.configure(outputs);
   const client = generateClient();
 
@@ -106,9 +105,9 @@ async function createProfile(userId: string, user: TestUser, photoUrls: { photo1
     userId,
     displayName: user.displayName,
     department: user.department,
-    photo1Url: photoUrls.photo1Url,
-    photo2Url: photoUrls.photo2Url,
-    photo3Url: photoUrls.photo3Url,
+    photo1Key: photoKeys.photo1Key,
+    photo2Key: photoKeys.photo2Key,
+    photo3Key: photoKeys.photo3Key,
     preferences: ["和食", "カフェ"],
     preferenceFreeText: "テストユーザーです",
     lunchDays: ["月", "水", "金"],
@@ -159,12 +158,12 @@ async function main() {
     const userId = user.email.split("@")[0];
 
     try {
-      const photo1Url = await uploadPhotoToS3(user.photos.photo1, userId, 1);
-      const photo2Url = await uploadPhotoToS3(user.photos.photo2, userId, 2);
-      const photo3Url = await uploadPhotoToS3(user.photos.photo3, userId, 3);
+      const photo1Key = await uploadPhotoToS3(user.photos.photo1, userId, 1);
+      const photo2Key = await uploadPhotoToS3(user.photos.photo2, userId, 2);
+      const photo3Key = await uploadPhotoToS3(user.photos.photo3, userId, 3);
 
       // 3. 프로필 생성
-      await createProfile(userId, user, { photo1Url, photo2Url, photo3Url });
+      await createProfile(userId, user, { photo1Key, photo2Key, photo3Key });
 
       credentials.push({
         displayName: user.displayName,
